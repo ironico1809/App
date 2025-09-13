@@ -1,0 +1,50 @@
+@import '../styles/variables.css';
+
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3em;
+}
+
+.input-label {
+  font-weight: 600;
+  color: var(--main-white);
+  margin-bottom: 0.2em;
+}
+
+.input-wrapper {
+  display: flex;
+  align-items: center;
+  background: var(--blue-mid);
+  border-radius: 8px;
+  padding: 0.2em 0.8em;
+  border: 1.5px solid var(--blue-mid);
+  transition: border 0.2s;
+}
+
+.input-icon {
+  margin-right: 0.5em;
+  color: var(--main-accent);
+  font-size: 1.2em;
+}
+
+.input-right {
+  margin-left: 0.5em;
+  color: var(--grey-medium);
+  cursor: pointer;
+  font-size: 1.2em;
+}
+
+.custom-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--main-white);
+  font-size: 1em;
+  padding: 0.8em 0;
+}
+
+.input-wrapper:focus-within {
+  border: 1.5px solid var(--main-accent);
+}
