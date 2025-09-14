@@ -4,7 +4,7 @@ import Button from '../components/Button';
 import Input from '../components/Input';
 import Checkbox from '../components/Checkbox';
 import LinkButton from '../components/LinkButton';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import Card from '../components/Card';
 import './LoginPage.css';
 
@@ -14,6 +14,7 @@ const LoginPage = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [remember, setRemember] = useState(false);
   const [error, setError] = useState('');
+  const navigate = useNavigate();
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -21,8 +22,9 @@ const LoginPage = () => {
       setError('Por favor, completa todos los campos.');
       return;
     }
-    setError('');   
-    alert('¡Login exitoso!');
+    setError('');
+    // Aquí iría la lógica real de autenticación
+    navigate('/dashboard');
   };
 
   return (
@@ -99,7 +101,9 @@ const LoginPage = () => {
               checked={remember}
               onChange={e => setRemember(e.target.checked)}
             />
-            <LinkButton href="#" className="forgot-link">¿Olvidaste tu contraseña?</LinkButton>
+            <Link to="/recuperar-contrasena" className="forgot-link" style={{color: 'var(--main-accent)', textDecoration: 'underline', fontWeight: 500}}>
+              ¿Olvidaste tu contraseña?
+            </Link>
           </div>
           <Button type="submit" className="login-btn">Ingresar</Button>
           <div style={{textAlign: 'center', marginTop: '1em', color: 'var(--grey-medium)', fontSize: '1em'}}>

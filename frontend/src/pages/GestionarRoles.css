@@ -1,0 +1,40 @@
+@import '../styles/variables.css';
+
+.roles-bg {
+  min-height: 100vh;
+  background: radial-gradient(ellipse 80% 60% at 60% 20%, #23213a 0%, #171528 100%);
+  display: flex;
+}
+.roles-container { padding: 2rem; }
+.roles-title { color: var(--main-white); margin: 0; font-size: 1.6rem; }
+.roles-subtitle { color: var(--grey-medium); margin: 0.5rem 0 1rem; }
+
+.roles-grid { display: grid; grid-template-columns: 1fr 2fr; gap: 1rem; }
+.roles-panel { background: #272444; border-radius: 16px; padding: 1rem; box-shadow: 0 8px 32px rgba(0,0,0,0.25); }
+.roles-panel h2 { color: var(--main-white); margin: 0 0 0.2rem; }
+.panel-subtitle { color: var(--grey-medium); margin: 0 0 0.8rem; }
+
+.users-scroll { max-height: 520px; overflow: auto; display: flex; flex-direction: column; gap: 0.6rem; }
+.user-item { background: #1f1d35; border-radius: 12px; padding: 0.9rem; cursor: pointer; border: 2px solid transparent; }
+.user-item:hover { background: #2b284b; }
+.user-item.selected { border: 2px solid var(--main-accent); background: #302c53; }
+.user-name { color: var(--main-white); font-weight: 700; }
+.user-email, .user-role { color: var(--grey-medium); }
+
+.assignment .two-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem; margin-bottom: 0.8rem; }
+.field { margin: 0.7rem 0; }
+.field-label { color: var(--grey-medium); font-weight: 600; margin-bottom: 0.3rem; display:block; }
+.pill { background: #1f1d35; color: var(--main-white); border-radius: 10px; padding: 0.6rem 0.8rem; }
+.select { background: var(--blue-mid); color: var(--main-white); border: 1.5px solid var(--blue-mid); padding: 0.7rem; border-radius: 8px; outline: none; }
+.hint { color: var(--grey-medium); font-size: 0.9rem; margin: 0.3rem 0 0; }
+
+.permissions-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.7rem; margin-top: 0.8rem; }
+.perm-item { background: #1f1d35; border-radius: 12px; padding: 0.8rem; }
+.perm-label { color: var(--main-white); font-weight: 600; }
+.perm-code { color: var(--grey-medium); font-weight: 600; font-size: 0.85em; margin-left: 0.3em; }
+
+.actions-row { display:flex; gap: 0.8rem; justify-content: flex-end; margin-top: 1rem; }
+
+@media (max-width: 1100px) {
+  .roles-grid { grid-template-columns: 1fr; }
+}

@@ -1,0 +1,68 @@
+@import '../styles/variables.css';
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  backdrop-filter: blur(2px);
+}
+
+.modal-panel {
+  width: min(560px, 92vw);
+  background: #1f1d35;
+  border: 1px solid #3a385a;
+  border-radius: 12px;
+  box-shadow: 0 10px 32px rgba(0,0,0,0.35);
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.8rem 1rem;
+  border-bottom: 1px solid #2d2a49;
+}
+.modal-header h3 { margin: 0; color: var(--main-white); font-size: 1.1rem; }
+.modal-close {
+  background: transparent;
+  color: var(--grey-medium);
+  border: none;
+  font-size: 1rem;
+  cursor: pointer;
+}
+.modal-close:hover { color: var(--main-accent); }
+
+.modal-body {
+  padding: 1rem;
+  color: var(--main-white);
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.7rem;
+}
+.form-grid .full { grid-column: 1 / -1; }
+.form-actions { display: flex; gap: 0.5rem; justify-content: flex-end; margin-top: 0.8rem; }
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+.field label { color: var(--grey-medium); font-weight: 600; font-size: 0.92rem; }
+.field input, .field select, .field textarea {
+  background: #17162b;
+  color: var(--main-white);
+  border: 1px solid #353256;
+  border-radius: 8px;
+  padding: 0.55rem 0.7rem;
+  outline: none;
+}
+.field textarea { resize: vertical; min-height: 72px; }
+
+@media (max-width: 700px) { .form-grid { grid-template-columns: 1fr; } }

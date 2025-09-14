@@ -1,0 +1,36 @@
+@import '../styles/variables.css';
+
+.cp-bg { min-height: 100vh; background: radial-gradient(ellipse 80% 60% at 60% 20%, #23213a 0%, #171528 100%); }
+.cp-container { max-width: 1200px; margin: 1.2rem auto 2rem; background: transparent; padding: 0 1rem; color: var(--main-white); }
+
+.cp-header h1 { margin: 0; font-size: 1.5rem; font-weight: 700; }
+.cp-header p { margin: 0.3rem 0 1.2rem; color: var(--grey-medium); }
+
+.cp-filters { display: flex; gap: 0.6rem; align-items: center; margin: 0.8rem 0 1rem; flex-wrap: wrap; }
+.cp-input { background: #1e1c33; color: var(--main-white); border: 1px solid #3c3961; border-radius: 10px; padding: 0.5rem 0.9rem; font-size: 0.95rem; min-width: 260px; }
+.cp-select { background: #1e1c33; color: var(--main-white); border: 1px solid #3c3961; border-radius: 10px; padding: 0.5rem 0.9rem; font-size: 0.95rem; }
+.cp-checkbox { color: var(--main-white); font-size: 0.95rem; display: flex; align-items: center; gap: 0.4em; }
+.cp-checkbox input[type="checkbox"] { accent-color: var(--main-accent); width: 1.1em; height: 1.1em; }
+
+.cp-table { background: #2a2749; border-radius: 14px; overflow: hidden; box-shadow: 0 8px 32px rgba(0,0,0,0.18); margin-top: 0.5rem; }
+.cp-thead, .cp-row { display: grid; grid-template-columns: 56px 120px 200px 1.4fr 120px 140px 150px; column-gap: 0.5rem; align-items: center; }
+.cp-thead { background: #2d2946; color: var(--grey-medium); font-weight: 700; font-size: 0.98rem; padding: 0.7rem 0.9rem; }
+.cp-row { background: #1e1c33; color: var(--main-white); padding: 0.65rem 0.9rem; border-top: 1px solid #2d2946; font-size: 0.98rem; }
+.cp-row:last-child { border-radius: 0 0 14px 14px; }
+.cp-row .badge { padding: 0.18em 0.6em; font-size: 0.85rem; }
+.cp-actions { display: flex; flex-direction: column; gap: 0.35rem; align-items: flex-start; }
+.cp-actions .custom-button.small { min-width: 84px; padding: 3px 8px; font-size: 0.86rem; white-space: nowrap; }
+.cp-actions .custom-button.danger.small { min-width: 92px; }
+.cp-thead > div:nth-child(5), .cp-row > div:nth-child(5) { text-align: right; }
+.cp-row > div { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cp-row > div:nth-child(4) { white-space: normal; }
+
+@media (max-width: 1100px) {
+  .cp-container { padding: 1.2rem 0.3rem; }
+  .cp-thead, .cp-row { grid-template-columns: 40px 90px 130px 1fr 90px 120px 120px; font-size: 0.95rem; }
+}
+@media (max-width: 800px) {
+  .cp-container { padding: 0.5rem 0.1rem; }
+  .cp-thead, .cp-row { grid-template-columns: 32px 70px 100px 1fr 80px 90px 100px; font-size: 0.89rem; }
+  .cp-filters { flex-direction: column; gap: 0.5rem; align-items: stretch; }
+}

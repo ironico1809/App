@@ -4,8 +4,8 @@
   background-color: var(--main-accent);
   color: var(--main-bg);
   border: none;
-  border-radius: 4px;
-  padding: 0.75em 1.5em;
+  border-radius: 10px;
+  padding: 8px 14px;
   font-size: 1rem;
   font-weight: bold;
   cursor: pointer;
@@ -15,4 +15,31 @@
 .custom-button:hover {
   background-color: var(--yellow-light);
   color: var(--main-bg);
+}
+
+/* Variants */
+.custom-button.outline {
+  background: transparent;
+  color: var(--main-white);
+  border: 2px solid var(--main-accent);
+  border-radius: 12px;
+}
+.custom-button.outline:hover {
+  background: #39365a;
+}
+.custom-button.danger {
+  background: #e53e3e;
+  color: #fff;
+  border-radius: 12px;
+}
+.custom-button.danger:hover {
+  background: #c53030;
+}
+
+/* Size */
+.custom-button.small {
+  padding: 4px 8px;
+  font-size: 0.88rem;
+  border-radius: 10px;
+  min-width: 92px;
 }
