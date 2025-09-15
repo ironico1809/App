@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import Button from '../components/Button';
 import Input from '../components/Input';
@@ -6,6 +7,7 @@ import Card from '../components/Card';
 import LinkButton from '../components/LinkButton';
 import { Link } from 'react-router-dom';
 import './RegistrarUsuario.css';
+import { registrarUsuario } from '../services/api';
 
 const RegistrarUsuario = () => {
   const [form, setForm] = useState({
@@ -23,7 +25,7 @@ const RegistrarUsuario = () => {
     setForm(f => ({ ...f, [name]: type === 'checkbox' ? checked : value }));
   };
 
-  const handleSubmit = e => {
+  const handleSubmit = async e => {
     e.preventDefault();
     if (!form.nombre || !form.telefono || !form.email || !form.password || !form.password2 || !form.acepta) {
       setError('Por favor, completa todos los campos y acepta los términos.');
@@ -38,7 +40,25 @@ const RegistrarUsuario = () => {
       return;
     }
     setError('');
-    alert('¡Registro exitoso!');
+    // Llamar al backend
+    const datos = {
+      nombre_completo: form.nombre,
+      correo: form.email,
+      contrasena: form.password,
+      telefono: form.telefono
+    };
+    try {
+      const respuesta = await registrarUsuario(datos);
+      if (respuesta.id) {
+        alert('¡Registro exitoso!');
+      } else if (respuesta.detail) {
+        setError(respuesta.detail);
+      } else {
+        setError('Error al registrar usuario.');
+      }
+    } catch (err) {
+      setError('Error de conexión con el servidor.');
+    }
   };
 
   return (

@@ -1,3 +1,14 @@
+# Backend de autenticación personalizado para login con correo
+AUTHENTICATION_BACKENDS = [
+    'usuarios.auth_backend.UsuarioAuthBackend',
+    'django.contrib.auth.backends.ModelBackend',
+]
+# Configuración de autenticación JWT para DRF
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
+}
 """
 Django settings for backend project.
 
@@ -28,6 +39,7 @@ ALLOWED_HOSTS = []
 
 # Application definition
 
+
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -38,17 +50,22 @@ INSTALLED_APPS = [
     'usuarios',
     'rest_framework',
     'finanzas',
+    'corsheaders',
 ]
 
+
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
+    'django.middleware.common.CommonMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+# Permitir todos los orígenes para desarrollo (CORS)
+CORS_ALLOW_ALL_ORIGINS = True
 
 ROOT_URLCONF = 'backend.urls'
 

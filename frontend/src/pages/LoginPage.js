@@ -1,4 +1,5 @@
 
+
 import React, { useState } from 'react';
 import Button from '../components/Button';
 import Input from '../components/Input';
@@ -7,6 +8,7 @@ import LinkButton from '../components/LinkButton';
 import { Link, useNavigate } from 'react-router-dom';
 import Card from '../components/Card';
 import './LoginPage.css';
+import { loginUsuario } from '../services/auth';
 
 const LoginPage = () => {
   const [email, setEmail] = useState('');
@@ -16,15 +18,22 @@ const LoginPage = () => {
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!email || !password) {
       setError('Por favor, completa todos los campos.');
       return;
     }
     setError('');
-    // Aquí iría la lógica real de autenticación
-    navigate('/dashboard');
+    const respuesta = await loginUsuario({ correo: email, contrasena: password });
+    if (respuesta.access) {
+      localStorage.setItem('token', respuesta.access);
+      navigate('/dashboard');
+    } else if (respuesta.detail) {
+      setError(respuesta.detail);
+    } else {
+      setError('Contraseña incorrecta');
+    }
   };
 
   return (
