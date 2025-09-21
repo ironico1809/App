@@ -1,4 +1,3 @@
-
 import React from 'react';
 
 import Card from '../components/Card';
@@ -65,10 +64,10 @@ const Dashboard = () => {
   return (
     <div className="dashboard-bg" style={{display:'flex'}}>
       <Sidebar />
-      <div style={{flex:1, marginLeft:240}}>
+      <div className="app-content">{/* This class will be managed by Sidebar component */}
         <div className="dashboard-header-bar">
           <div className="dashboard-logo">
-            <span className="dashboard-logo-icon" style={{background:'#ffb902'}}>
+            <span className="dashboard-logo-icon">
               <img src={process.env.PUBLIC_URL + '/logo.png'} alt="Logo" style={{width:'32px',height:'32px',borderRadius:'8px'}} />
             </span>
             <span className="dashboard-logo-title">Smart Condominium</span>

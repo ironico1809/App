@@ -39,7 +39,7 @@ const ConfigPrecios = () => {
   return (
     <div className="cp-bg" style={{display:'flex'}}>
       <Sidebar />
-      <div style={{flex:1, marginLeft:240}}>
+  <div className="app-content">
         <div className="cp-container">
           <div className="cp-header">
             <h1>Configurar precios de expensas y multas</h1>

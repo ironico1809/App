@@ -64,7 +64,7 @@ const HistorialPagos = () => {
   return (
     <div className="history-bg" style={{display:'flex'}}>
       <Sidebar />
-      <div style={{flex:1, marginLeft:240}}>
+  <div className="app-content">
         <div className="hp-container">
           <div className="hp-header">
             <h1>Historial de pagos y comprobantes</h1>

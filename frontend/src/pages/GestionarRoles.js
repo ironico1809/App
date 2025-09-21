@@ -56,7 +56,7 @@ const GestionarRoles = () => {
   return (
     <div className="roles-bg" style={{display:'flex'}}>
       <Sidebar />
-      <div style={{flex:1, marginLeft:240}}>
+  <div className="app-content">
         <div className="roles-container">
           <h1 className="roles-title">Gestionar Roles y Permisos</h1>
           <p className="roles-subtitle">Selecciona un usuario, asigna un rol y ajusta permisos adicionales si es necesario.</p>

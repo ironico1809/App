@@ -53,7 +53,7 @@ const CuotasServicios = () => {
   return (
     <div className="finance-bg" style={{display:'flex'}}>
       <Sidebar />
-      <div style={{flex:1, marginLeft:240}}>
+  <div className="app-content">
         <div className="cs-container">
           <div className="cs-header">
             <h1>Consultar cuotas y servicios</h1>

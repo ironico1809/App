@@ -57,7 +57,7 @@ const Pagos = () => {
   return (
     <div className="pagos-bg" style={{display:'flex'}}>
       <Sidebar />
-      <div style={{flex:1, marginLeft:240}}>
+  <div className="app-content">
         <div className="pagos-container">
           <section className="panel">
             <div className="panel-header">

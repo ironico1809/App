@@ -8,42 +8,84 @@
 }
 
 .dashboard-header-bar {
-  width: 100%;
-  background: #3c3860;
+  position: fixed; /* Fijar el encabezado en la parte superior */
+  top: 0;
+  left: 0;
+  width: 100%; /* Expandir el encabezado a toda la pantalla */
+  z-index: 100;
   display: flex;
-  align-items: center;
   justify-content: space-between;
-  padding: 0.7em 2.5em;
+  align-items: center;
+  padding: 10px 80px 10px 20px; /* Más padding a la izquierda para el botón */
+  background-color: #23213a;
+  color: #fff;
+  gap: 16px;
   box-sizing: border-box;
-  min-height: 64px;
-  box-shadow: 0 2px 16px rgba(44, 98, 255, 0.08);
-  z-index: 10;
+}
+
+/* Mobile header improvements */
+@media (max-width: 768px) {
+  .dashboard-header-bar {
+    padding: 0.8em 1.2em;
+    min-height: 56px;
+    gap: 0.8em;
+  }
+  
+  .dashboard-logo {
+    order: 1;
+  }
+  
+  .dashboard-user-info {
+    order: 2;
+    gap: 0.8em;
+  }
+}
+
+@media (max-width: 480px) {
+  .dashboard-header-bar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.7em;
+    padding: 0.7em 1em;
+    min-height: auto;
+  }
+  
+  .dashboard-user-info {
+    width: 100%;
+    justify-content: space-between;
+  }
 }
 .dashboard-logo {
   display: flex;
   align-items: center;
-  gap: 0.7em;
+  gap: 12px; /* Espaciado entre el icono y el título */
+  margin-left: 60px; /* Margen para que no tape el botón de hamburguesa */
+  flex: 1;
+  min-width: 0;
 }
 .dashboard-logo-icon {
-  background: var(--main-accent);
-  color: var(--main-bg);
-  border-radius: 12px;
-  font-size: 2em;
-  padding: 0.2em 0.3em;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 2px 8px rgba(255,185,2,0.10);
 }
+
+.dashboard-logo-icon img {
+  width: 40px; /* Ajustar tamaño del logo */
+  height: 40px;
+  border-radius: 8px;
+}
+
 .dashboard-logo-title {
   color: var(--main-white);
-  font-size: 1.5em;
+  font-size: 1.3em;
   font-weight: 700;
+  white-space: nowrap;
+  flex-shrink: 0; /* Evita que se contraiga */
 }
 .dashboard-user-info {
   display: flex;
   align-items: center;
-  gap: 1.2em;
+  gap: 15px; /* Espaciado entre elementos */
 }
 .dashboard-bell {
   position: relative;
@@ -53,13 +95,12 @@
 }
 .dashboard-dot {
   position: absolute;
-  top: 0.1em;
-  right: -0.2em;
-  width: 10px;
-  height: 10px;
-  background: #e53e3e;
+  top: -5px;
+  right: -5px;
+  width: 8px;
+  height: 8px;
+  background-color: red;
   border-radius: 50%;
-  border: 2px solid #3c3860;
 }
 .dashboard-user-avatar {
   background: var(--main-accent);
@@ -98,6 +139,31 @@
   display: flex;
   flex-direction: column;
   gap: 2.5em;
+  margin-top: 64px; /* Dejar espacio para el encabezado fijo */
+  margin-left: 280px; /* Ajustar el contenido para que no se superponga con la barra lateral */
+}
+
+/* Tablet optimizations */
+@media (max-width: 1024px) {
+  .dashboard-content {
+    padding: 2em 1.2em;
+    gap: 2em;
+  }
+}
+
+/* Mobile optimizations */
+@media (max-width: 768px) {
+  .dashboard-content {
+    padding: 1.5em 1em;
+    gap: 1.5em;
+  }
+}
+
+@media (max-width: 480px) {
+  .dashboard-content {
+    padding: 1em 0.5em;
+    gap: 1.2em;
+  }
 }
 .dashboard-welcome-card {
   background: #2d2946;
@@ -113,6 +179,33 @@
   margin-left: auto;
   margin-right: auto;
 }
+
+/* Welcome card responsive */
+@media (max-width: 1024px) {
+  .dashboard-welcome-card {
+    padding: 2em 2em 1.8em 2em;
+    min-width: 300px;
+    border-radius: 20px;
+  }
+}
+
+@media (max-width: 768px) {
+  .dashboard-welcome-card {
+    padding: 1.8em 1.5em 1.5em 1.5em;
+    min-width: unset;
+    max-width: 100%;
+    margin-bottom: 1.2em;
+    border-radius: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .dashboard-welcome-card {
+    padding: 1.5em 1.2em 1.2em 1.2em;
+    border-radius: 14px;
+    margin-bottom: 1em;
+  }
+}
 .dashboard-welcome-title {
   color: var(--main-white);
   font-size: 2.4em;
@@ -120,11 +213,49 @@
   margin-bottom: 0.2em;
   letter-spacing: 0.01em;
 }
+
+/* Title responsive */
+@media (max-width: 1024px) {
+  .dashboard-welcome-title {
+    font-size: 2.1em;
+  }
+}
+
+@media (max-width: 768px) {
+  .dashboard-welcome-title {
+    font-size: 1.9em;
+    text-align: center;
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .dashboard-welcome-title {
+    font-size: 1.7em;
+  }
+}
 .dashboard-welcome-subtitle {
   color: var(--grey-medium);
   font-size: 1.18em;
   margin-bottom: 1.7em;
   font-weight: 500;
+}
+
+/* Subtitle responsive */
+@media (max-width: 768px) {
+  .dashboard-welcome-subtitle {
+    font-size: 1.1em;
+    text-align: center;
+    width: 100%;
+    margin-bottom: 1.4em;
+  }
+}
+
+@media (max-width: 480px) {
+  .dashboard-welcome-subtitle {
+    font-size: 1em;
+    margin-bottom: 1.2em;
+  }
 }
 .dashboard-quick-actions-row {
   display: flex;
@@ -132,51 +263,111 @@
   gap: 2.2em;
   margin-top: 1.2em;
   width: 100%;
+  flex-wrap: wrap;
 }
+
 .dashboard-metrics-row {
   display: flex;
   gap: 2em;
   margin-bottom: 1.5em;
   justify-content: center;
+  flex-wrap: wrap;
 }
+
 .dashboard-bottom-row {
   display: flex;
   gap: 2em;
   justify-content: center;
+  flex-wrap: wrap;
 }
+
 .dashboard-bottom-left {
   flex: 2;
   min-width: 350px;
 }
+
 .dashboard-bottom-right {
   flex: 1;
   min-width: 300px;
 }
-@media (max-width: 1100px) {
-  .dashboard-content {
-    flex-direction: column;
-    gap: 1.2em;
+
+/* Improved responsive layout */
+@media (max-width: 1200px) {
+  .dashboard-quick-actions-row {
+    gap: 1.8em;
   }
-  .dashboard-metrics-row, .dashboard-bottom-row, .dashboard-quick-actions-row {
+  .dashboard-metrics-row {
+    gap: 1.5em;
+  }
+  .dashboard-bottom-row {
+    gap: 1.5em;
+  }
+}
+
+@media (max-width: 768px) {
+  .dashboard-quick-actions-row,
+  .dashboard-metrics-row,
+  .dashboard-bottom-row {
     flex-direction: column;
     gap: 1.2em;
     align-items: center;
   }
+  
+  .dashboard-bottom-left,
+  .dashboard-bottom-right {
+    flex: 1;
+    min-width: unset;
+    width: 100%;
+  }
 }
-@media (max-width: 700px) {
+
+@media (max-width: 480px) {
+  .dashboard-quick-actions-row,
+  .dashboard-metrics-row,
+  .dashboard-bottom-row {
+    gap: 1em;
+  }
+}
+/* Updated mobile responsive media queries */
+@media (max-width: 768px) {
+  .dashboard-header-bar {
+    padding: 0.8em 1.2em;
+    min-height: 56px;
+    gap: 0.8em;
+  }
+  
+  .dashboard-content {
+    padding: 1.5em 1em;
+    gap: 1.5em;
+  }
+  
+  .dashboard-welcome-card {
+    padding: 1.8em 1.5em 1.5em 1.5em;
+    min-width: unset;
+    max-width: 100%;
+    margin-bottom: 1.2em;
+    border-radius: 16px;
+  }
+}
+
+@media (max-width: 480px) {
   .dashboard-header-bar {
     flex-direction: column;
     align-items: flex-start;
     gap: 0.7em;
     padding: 0.7em 1em;
+    min-height: auto;
   }
+  
   .dashboard-content {
-    padding: 1em 0.2em 1em 0.2em;
+    padding: 1em 0.5em;
+    gap: 1.2em;
   }
+  
   .dashboard-welcome-card {
-    padding: 1.2em 0.7em 1.2em 0.7em;
-    min-width: unset;
-    max-width: 99vw;
+    padding: 1.5em 1.2em 1.2em 1.2em;
+    border-radius: 14px;
+    margin-bottom: 1em;
   }
 }
 @import '../styles/variables.css';
@@ -237,3 +428,57 @@
   margin-top: 2em;
   letter-spacing: 0.01em;
 }
+
+/* Ajustes en el header */
+.dashboard-header-bar {
+    position: fixed; /* Fijar el encabezado en la parte superior */
+    top: 0;
+    left: 0;
+    width: 100%; /* Expandir el encabezado a toda la pantalla */
+    z-index: 100;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 20px;
+    background-color: #23213a;
+    color: #fff;
+    gap: 16px;
+  }
+
+  .dashboard-header-bar .sidebar-mobile-toggle {
+    position: static;
+    margin-right: 10px;
+    box-shadow: none;
+  }
+
+  .dashboard-logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .dashboard-logo-title {
+    font-size: 1.5rem;
+    font-weight: bold;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 220px;
+  }
+
+  .dashboard-user-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  @media (max-width: 768px) {
+    .dashboard-header-bar {
+      padding: 8px 12px;
+      gap: 8px;
+    }
+    .dashboard-logo-title {
+      font-size: 1.1rem;
+      max-width: 120px;
+    }
+  }

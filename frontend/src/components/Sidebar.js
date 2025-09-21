@@ -1,16 +1,118 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import './Sidebar.css';
+import './Sidebar_fixed.css';
 
 const Sidebar = () => {
   const location = useLocation();
+  const asideRef = useRef(null);
+  const [collapsed, setCollapsed] = useState(false);
+  const [isOpen, setIsOpen] = useState(false); // Start with sidebar hidden by default
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  const [showHint, setShowHint] = useState(true);
   const [openUsers, setOpenUsers] = useState(
     location.pathname === '/usuarios' || location.pathname === '/roles'
   );
   const [openFinance, setOpenFinance] = useState(location.pathname.startsWith('/finanzas'));
-  const [collapsed, setCollapsed] = useState(false);
 
-  // Icon set (puedes cambiar los emojis por SVG si lo prefieres)
+  // Handle window resize
+  useEffect(() => {
+    const handleResize = () => {
+      const mobile = window.innerWidth <= 768;
+      setIsMobile(mobile);
+      
+      // No auto-open sidebar on resize - let user control it
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Hide hint after a few seconds
+  useEffect(() => {
+    if (!isMobile && !isOpen && showHint) {
+      const timer = setTimeout(() => {
+        setShowHint(false);
+      }, 5000); // Hide after 5 seconds
+      
+      return () => clearTimeout(timer);
+    }
+  }, [isMobile, isOpen, showHint]);
+
+  useEffect(() => {
+    if (collapsed) {
+      setOpenUsers(false);
+      setOpenFinance(false);
+    }
+  }, [collapsed]);
+
+  // Update app content margin based on sidebar state
+  useEffect(() => {
+    const appContent = document.querySelector('.app-content');
+    if (appContent) {
+      appContent.className = 'app-content';
+      
+      if (!isMobile && isOpen) {
+        if (collapsed) {
+          appContent.classList.add('sidebar-collapsed');
+        } else {
+          appContent.classList.add('sidebar-open');
+        }
+      }
+    }
+  }, [isOpen, collapsed, isMobile]);
+
+  const toggleSidebar = () => {
+    setShowHint(false); // Hide hint when user interacts
+
+    if (isMobile) {
+      setIsOpen(!isOpen);
+    } else {
+      setIsOpen(!isOpen); // Ensure full toggle without partial collapse
+      setCollapsed(false); // Always reset collapsed state when toggling
+    }
+  };
+
+  const hideSidebar = () => {
+    if (!isMobile) {
+      setIsOpen(false);
+      setCollapsed(false);
+    } else {
+      setIsOpen(false);
+    }
+  };
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (!asideRef.current) return;
+      if (!asideRef.current.contains(e.target)) {
+        setOpenUsers(false);
+        setOpenFinance(false);
+        // Close sidebar on mobile when clicking outside
+        if (isMobile && isOpen) {
+          setIsOpen(false);
+        }
+      }
+    };
+    
+    // Close sidebar on escape key
+    const handleEscape = (e) => {
+      if (e.key === 'Escape' && isOpen) {
+        if (isMobile) {
+          setIsOpen(false);
+        } else {
+          hideSidebar();
+        }
+      }
+    };
+
+    document.addEventListener('click', handleClickOutside);
+    document.addEventListener('keydown', handleEscape);
+    return () => {
+      document.removeEventListener('click', handleClickOutside);
+      document.removeEventListener('keydown', handleEscape);
+    };
+  }, [isOpen, isMobile]);
+
   const icons = {
     dashboard: <span className="sidebar-link-icon" role="img" aria-label="Dashboard">🏠</span>,
     users: <span className="sidebar-link-icon" role="img" aria-label="Usuarios">👥</span>,
@@ -18,38 +120,51 @@ const Sidebar = () => {
     roles: <span className="sidebar-link-icon" role="img" aria-label="Roles">🛡️</span>,
     finance: <span className="sidebar-link-icon" role="img" aria-label="Finanzas">💰</span>,
     pay: <span className="sidebar-link-icon" role="img" aria-label="Pago">💳</span>,
-    history: <span className="sidebar-link-icon" role="img" aria-label="Historial">🧾</span>,
+    history: <span className="sidebar-link-icon" role="img" aria-label="Historial">🗾</span>,
     config: <span className="sidebar-link-icon" role="img" aria-label="Config">⚙️</span>,
     services: <span className="sidebar-link-icon" role="img" aria-label="Servicios">🛠️</span>,
   };
 
+  // Determine sidebar CSS classes
+  const sidebarClasses = [
+    'sidebar',
+    isOpen ? 'open' : '', // Use 'open' class for both mobile and desktop
+    collapsed && isOpen ? 'collapsed' : '' // Only collapse if open
+  ].filter(Boolean).join(' ');
+
   return (
-    <aside className={`sidebar${collapsed ? ' collapsed' : ''}`}>
-      <div className="sidebar-logo">
-        <img
-          src={process.env.PUBLIC_URL + '/logo.png'}
-          alt="Logo"
-          className="sidebar-logo-img"
+    <>
+      {/* Hamburger toggle button - siempre visible */}
+      <button
+        className={`sidebar-mobile-toggle ${isOpen ? 'active' : ''}`}
+        onClick={toggleSidebar}
+        aria-label={isOpen ? 'Cerrar menú' : 'Abrir menú'}
+        title={isOpen ? 'Cerrar menú' : 'Abrir menú de navegación'}
+      >
+        <div className="hamburger">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+      </button>
+
+      {/* Hint for desktop users when sidebar is hidden */}
+      {!isMobile && !isOpen && showHint && (
+        <div className="sidebar-hint">
+          👆 Haz clic para abrir el menú
+        </div>
+      )}
+
+      {/* Overlay for mobile */}
+      {isMobile && (
+        <div 
+          className={`sidebar-overlay ${isOpen ? 'active' : ''}`}
+          onClick={() => setIsOpen(false)}
         />
-        {!collapsed && (
-          <span className="sidebar-title">
-            Smart <span className="accent">Condominium</span>
-          </span>
-        )}
-        <button
-          className="sidebar-toggle-btn"
-          onClick={() => setCollapsed((v) => !v)}
-          aria-label={collapsed ? 'Expandir barra lateral' : 'Colapsar barra lateral'}
-        >
-          {/* Ícono hamburguesa (3 líneas) */}
-          <span className="sidebar-hamburger">
-            <span />
-            <span />
-            <span />
-          </span>
-        </button>
-      </div>
-      <nav className="sidebar-nav">
+      )}
+
+      <aside ref={asideRef} className={sidebarClasses}>
+        <nav className="sidebar-nav">
         <Link
           to="/dashboard"
           className={`sidebar-link${location.pathname === '/dashboard' ? ' active' : ''}`}
@@ -58,13 +173,30 @@ const Sidebar = () => {
           <span className="sidebar-link-label">Dashboard</span>
         </Link>
 
-        {/* USUARIOS DROPDOWN */}
         <div
           className={`sidebar-link sidebar-link-dropdown${openUsers ? ' open' : ''}${['/usuarios', '/roles'].includes(location.pathname) ? ' active' : ''}`}
-          onClick={() => setOpenUsers((v) => !v)}
+          onClick={() => {
+            if (collapsed) return;
+            setOpenUsers((prev) => {
+              const next = !prev;
+              if (next) setOpenFinance(false);
+              return next;
+            });
+          }}
           tabIndex={0}
           role="button"
           aria-expanded={openUsers}
+          onKeyDown={(e) => {
+            if (collapsed) return;
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              setOpenUsers((prev) => {
+                const next = !prev;
+                if (next) setOpenFinance(false);
+                return next;
+              });
+            }
+          }}
         >
           {icons.users}
           <span className="sidebar-link-label">Administración de Usuarios</span>
@@ -93,13 +225,30 @@ const Sidebar = () => {
           </Link>
         </div>
 
-        {/* FINANZAS DROPDOWN */}
         <div
           className={`sidebar-link sidebar-link-dropdown${openFinance ? ' open' : ''}${location.pathname.startsWith('/finanzas') ? ' active' : ''}`}
-          onClick={() => setOpenFinance((v) => !v)}
+          onClick={() => {
+            if (collapsed) return;
+            setOpenFinance((prev) => {
+              const next = !prev;
+              if (next) setOpenUsers(false);
+              return next;
+            });
+          }}
           tabIndex={0}
           role="button"
           aria-expanded={openFinance}
+          onKeyDown={(e) => {
+            if (collapsed) return;
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              setOpenFinance((prev) => {
+                const next = !prev;
+                if (next) setOpenUsers(false);
+                return next;
+              });
+            }
+          }}
         >
           {icons.finance}
           <span className="sidebar-link-label">Gestión Financiera</span>
@@ -145,6 +294,7 @@ const Sidebar = () => {
         </div>
       </nav>
     </aside>
+    </>
   );
 };
 

@@ -69,7 +69,7 @@ const GestionarUsuarios = () => {
   return (
     <div className="manage-users-bg" style={{display:'flex'}}>
       <Sidebar />
-      <div style={{flex:1, marginLeft:240}}>
+  <div className="app-content">
         <div className="page-container">
           <div className="page-card">
             <div className="page-header">
