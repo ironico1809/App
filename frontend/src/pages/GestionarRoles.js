@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import Sidebar from '../components/Sidebar';
+import DashboardLayout from '../components/DashboardLayout';
 import Input from '../components/Input';
 import Checkbox from '../components/Checkbox';
 import Button from '../components/Button';
@@ -54,12 +54,13 @@ const GestionarRoles = () => {
   };
 
   return (
-    <div className="roles-bg" style={{display:'flex'}}>
-      <Sidebar />
-  <div className="app-content">
-        <div className="roles-container">
-          <h1 className="roles-title">Gestionar Roles y Permisos</h1>
-          <p className="roles-subtitle">Selecciona un usuario, asigna un rol y ajusta permisos adicionales si es necesario.</p>
+    <DashboardLayout>
+      <div className="roles-container">
+        <div className="roles-card">
+          <div className="page-header">
+            <h1>Gestionar Roles y Permisos</h1>
+            <p className="roles-subtitle">Selecciona un usuario, asigna un rol y ajusta permisos adicionales si es necesario.</p>
+          </div>
 
           <div className="roles-grid">
             <section className="roles-panel users-list">
@@ -122,7 +123,7 @@ const GestionarRoles = () => {
           </div>
         </div>
       </div>
-    </div>
+    </DashboardLayout>
   );
 };
 

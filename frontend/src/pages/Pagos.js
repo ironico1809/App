@@ -5,6 +5,7 @@ import Checkbox from '../components/Checkbox';
 import Badge from '../components/Badge';
 import Input from '../components/Input';
 import './Pagos.css';
+import DashboardLayout from '../components/DashboardLayout';
 
 const cargosMock = [
   { id: 1, tipo: 'EXPENSA', concepto: 'Expensa Septiembre', periodo: '2025-09', vence: '2025-09-10', monto: 350.00, estado: 'Pendiente' },
@@ -55,81 +56,78 @@ const Pagos = () => {
   };
 
   return (
-    <div className="pagos-bg" style={{display:'flex'}}>
-      <Sidebar />
-  <div className="app-content">
-        <div className="pagos-container">
-          <section className="panel">
-            <div className="panel-header">
-              <h2>Cargos pendientes</h2>
-              <p>Unidad C-12</p>
-            </div>
-            <div className="panel-actions">
-              <Button className={allSelected ? '' : 'outline'} onClick={selectAll}>Seleccionar todos</Button>
-              <Button className="danger" onClick={clearSel}>Limpiar</Button>
-            </div>
-            <div className="pagos-thead pagos-grid">
-              <div></div><div>Tipo</div><div>Concepto</div><div>Periodo</div><div>Vence</div><div>Monto (Bs)</div><div>Estado</div>
-            </div>
-            {cargosMock.map(c => (
-              <div className="pagos-row pagos-grid" key={c.id}>
-                <div>
-                  <Checkbox checked={seleccionados.includes(c.id)} onChange={() => toggleItem(c.id)} />
-                </div>
-                <div>{c.tipo}</div>
-                <div className="pagos-concepto" title={c.concepto}>{c.concepto}</div>
-                <div>{c.periodo}</div>
-                <div>{c.vence}</div>
-                <div className="pagos-monto">{c.monto.toFixed(2)}</div>
-                <div>{estadoBadge(c.estado)}</div>
+    <DashboardLayout>
+      <div className="pagos-container">
+        <section className="panel">
+          <div className="panel-header">
+            <h2>Cargos pendientes</h2>
+            <p>Unidad C-12</p>
+          </div>
+          <div className="panel-actions">
+            <Button className={allSelected ? '' : 'outline'} onClick={selectAll}>Seleccionar todos</Button>
+            <Button className="danger" onClick={clearSel}>Limpiar</Button>
+          </div>
+          <div className="pagos-thead pagos-grid">
+            <div></div><div>Tipo</div><div>Concepto</div><div>Periodo</div><div>Vence</div><div>Monto (Bs)</div><div>Estado</div>
+          </div>
+          {cargosMock.map(c => (
+            <div className="pagos-row pagos-grid" key={c.id}>
+              <div>
+                <Checkbox checked={seleccionados.includes(c.id)} onChange={() => toggleItem(c.id)} />
               </div>
-            ))}
-          </section>
-
-          <section className="panel">
-            <div className="panel-header">
-              <h2>Resumen y pago</h2>
-              <p>Total seleccionado: <b>Bs {total.toFixed(2)}</b></p>
+              <div>{c.tipo}</div>
+              <div className="pagos-concepto" title={c.concepto}>{c.concepto}</div>
+              <div>{c.periodo}</div>
+              <div>{c.vence}</div>
+              <div className="pagos-monto">{c.monto.toFixed(2)}</div>
+              <div>{estadoBadge(c.estado)}</div>
             </div>
+          ))}
+        </section>
 
-            <div className="tabs">
-              <button className={`tab ${tab==='tarjeta'?'active':''}`} onClick={()=>setTab('tarjeta')}>💳 Tarjeta</button>
-              <button className={`tab ${tab==='transferencia'?'active':''}`} onClick={()=>setTab('transferencia')}>🏦 Transferencia</button>
-              <button className={`tab ${tab==='qr'?'active':''}`} onClick={()=>setTab('qr')}>� QR</button>
+        <section className="panel">
+          <div className="panel-header">
+            <h2>Resumen y pago</h2>
+            <p>Total seleccionado: <b>Bs {total.toFixed(2)}</b></p>
+          </div>
+
+          <div className="tabs">
+            <button className={`tab ${tab==='tarjeta'?'active':''}`} onClick={()=>setTab('tarjeta')}>💳 Tarjeta</button>
+            <button className={`tab ${tab==='transferencia'?'active':''}`} onClick={()=>setTab('transferencia')}>🏦 Transferencia</button>
+            <button className={`tab ${tab==='qr'?'active':''}`} onClick={()=>setTab('qr')}>📱 QR</button>
+          </div>
+
+          {tab === 'tarjeta' && (
+            <div className="pay-form">
+              <Input placeholder="Número de tarjeta (16 dígitos)" value={card.numero} onChange={e=>setCard({...card, numero: e.target.value})} />
+              <Input placeholder="Nombre del titular" value={card.titular} onChange={e=>setCard({...card, titular: e.target.value})} />
+              <div className="two-cols">
+                <Input placeholder="Vencimiento (MM/AA)" value={card.venc} onChange={e=>setCard({...card, venc: e.target.value})} />
+                <Input placeholder="CVV" value={card.cvv} onChange={e=>setCard({...card, cvv: e.target.value})} />
+              </div>
             </div>
+          )}
+          {tab === 'transferencia' && (
+            <div className="bank-box">
+              <div>Banco: Banco X</div>
+              <div>Cuenta: 123-456-789</div>
+              <div>Titular: SmartCondo SA</div>
+              <div>Concepto: Pago expensas C-12</div>
+              <div className="hint">Luego sube el comprobante en la sección correspondiente (mock).</div>
+            </div>
+          )}
+          {tab === 'qr' && (
+            <div className="qr-box">
+              <div className="qr-placeholder">QR</div>
+              <div className="hint">Escanea para pagar desde tu banca móvil (mock).</div>
+            </div>
+          )}
 
-            {tab === 'tarjeta' && (
-              <div className="pay-form">
-                <Input placeholder="Número de tarjeta (16 dígitos)" value={card.numero} onChange={e=>setCard({...card, numero: e.target.value})} />
-                <Input placeholder="Nombre del titular" value={card.titular} onChange={e=>setCard({...card, titular: e.target.value})} />
-                <div className="two-cols">
-                  <Input placeholder="Vencimiento (MM/AA)" value={card.venc} onChange={e=>setCard({...card, venc: e.target.value})} />
-                  <Input placeholder="CVV" value={card.cvv} onChange={e=>setCard({...card, cvv: e.target.value})} />
-                </div>
-              </div>
-            )}
-            {tab === 'transferencia' && (
-              <div className="bank-box">
-                <div>Banco: Banco X</div>
-                <div>Cuenta: 123-456-789</div>
-                <div>Titular: SmartCondo SA</div>
-                <div>Concepto: Pago expensas C-12</div>
-                <div className="hint">Luego sube el comprobante en la sección correspondiente (mock).</div>
-              </div>
-            )}
-            {tab === 'qr' && (
-              <div className="qr-box">
-                <div className="qr-placeholder">QR</div>
-                <div className="hint">Escanea para pagar desde tu banca móvil (mock).</div>
-              </div>
-            )}
-
-            <Button onClick={onPay} className="pay-btn">Pagar ahora</Button>
-            <div className="legal-note">* Nunca guardamos datos sensibles de tu tarjeta en nuestros servidores.</div>
-          </section>
-        </div>
+          <Button onClick={onPay} className="pay-btn">Pagar ahora</Button>
+          <div className="legal-note">* Nunca guardamos datos sensibles de tu tarjeta en nuestros servidores.</div>
+        </section>
       </div>
-    </div>
+    </DashboardLayout>
   );
 };
 

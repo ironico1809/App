@@ -3,7 +3,9 @@ import Sidebar from '../components/Sidebar';
 import Input from '../components/Input';
 import Button from '../components/Button';
 import Badge from '../components/Badge';
+import ExportButtons from '../components/ExportButtons';
 import './CuotasServicios.css';
+import DashboardLayout from '../components/DashboardLayout';
 
 const dataMock = [
   { id: 1, unidad: 'C-12', tipo: 'EXPENSA', concepto: 'Expensa Septiembre', periodo: '2025-09', vencimiento: '2025-09-10', monto: 350.00, estado: 'Pendiente' },
@@ -51,10 +53,8 @@ const CuotasServicios = () => {
   const limpiar = () => { setQ(''); setTipo('Todos'); setEstado('Todos'); setDesde(''); setHasta(''); };
 
   return (
-    <div className="finance-bg" style={{display:'flex'}}>
-      <Sidebar />
-  <div className="app-content">
-        <div className="cs-container">
+    <DashboardLayout>
+      <div className="cs-container">
           <div className="cs-header">
             <h1>Consultar cuotas y servicios</h1>
             <p>Visualiza montos, vencimientos y estado de pago de tu unidad.</p>
@@ -89,6 +89,22 @@ const CuotasServicios = () => {
             <Button onClick={limpiar}>Limpiar</Button>
           </div>
 
+          <div className="cs-export-section">
+            <ExportButtons
+              data={filtrados}
+              fileName="cuotas_servicios"
+              reportTitle="Reporte de Cuotas y Servicios - Smart Condominium"
+              disabled={filtrados.length === 0}
+              onExportStart={(format) => console.log(`Exportando cuotas en ${format}...`)}
+              onExportComplete={(format, fileName) => {
+                alert(`✅ Reporte de cuotas exportado como ${fileName}`);
+              }}
+              onExportError={(format, error) => {
+                console.error(`Error exportando cuotas:`, error);
+              }}
+            />
+          </div>
+
           <div className="cs-table">
             <div className="cs-thead">
               <div>Unidad</div><div>Tipo</div><div>Concepto</div><div>Periodo</div><div>Vencimiento</div><div>Monto (Bs)</div><div>Estado</div><div>Acciones</div>
@@ -109,9 +125,8 @@ const CuotasServicios = () => {
               </div>
             ))}
           </div>
-        </div>
       </div>
-    </div>
+    </DashboardLayout>
   );
 };
 

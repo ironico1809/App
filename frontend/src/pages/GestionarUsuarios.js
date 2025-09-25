@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import Sidebar from '../components/Sidebar';
+import DashboardLayout from '../components/DashboardLayout';
 import Input from '../components/Input';
 import Button from '../components/Button';
 import Modal from '../components/Modal';
@@ -67,11 +67,9 @@ const GestionarUsuarios = () => {
   };
 
   return (
-    <div className="manage-users-bg" style={{display:'flex'}}>
-      <Sidebar />
-  <div className="app-content">
-        <div className="page-container">
-          <div className="page-card">
+    <DashboardLayout>
+      <div className="page-container">
+          <div className="users-card">
             <div className="page-header">
               <div>
                 <h1>Gestión de Usuarios</h1>
@@ -162,9 +160,8 @@ const GestionarUsuarios = () => {
               </div>
             </form>
           </Modal>
-        </div>
       </div>
-    </div>
+    </DashboardLayout>
   );
 };
 

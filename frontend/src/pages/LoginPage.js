@@ -32,7 +32,7 @@ const LoginPage = () => {
     } else if (respuesta.detail) {
       setError(respuesta.detail);
     } else {
-      setError('Contraseña incorrecta');
+      setError('Correo o contraseña incorrectos.');
     }
   };
 

@@ -1,7 +1,7 @@
 import React from 'react';
 
 import Card from '../components/Card';
-import Sidebar from '../components/Sidebar';
+import DashboardLayout from '../components/DashboardLayout';
 import DashboardQuickAction from '../components/dashboard/DashboardQuickAction';
 import DashboardMetric from '../components/dashboard/DashboardMetric';
 import DashboardActivity from '../components/dashboard/DashboardActivity';
@@ -60,54 +60,32 @@ const alerts = [
   { icon: <svg width="20" height="20" fill="none" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#38b000"/><path d="M9 12l2 2 4-4" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>, desc: 'Sistema de seguridad funcionando correctamente', time: 'Hace 2 horas', type: 'success' }
 ];
 
-const Dashboard = () => {
-  return (
-    <div className="dashboard-bg" style={{display:'flex'}}>
-      <Sidebar />
-      <div className="app-content">{/* This class will be managed by Sidebar component */}
-        <div className="dashboard-header-bar">
-          <div className="dashboard-logo">
-            <span className="dashboard-logo-icon">
-              <img src={process.env.PUBLIC_URL + '/logo.png'} alt="Logo" style={{width:'32px',height:'32px',borderRadius:'8px'}} />
-            </span>
-            <span className="dashboard-logo-title">Smart Condominium</span>
-          </div>
-          <div className="dashboard-user-info">
-            <span className="dashboard-bell">🔔<span className="dashboard-dot"></span></span>
-            <span className="dashboard-user-avatar">JP</span>
-            <div className="dashboard-user-details">
-              <div className="dashboard-user-name">Juan Pérez</div>
-              <div className="dashboard-user-role">Administrador</div>
-            </div>
-          </div>
-        </div>
-        <div className="dashboard-content">
-          <Card className="dashboard-welcome-card">
-            <div className="dashboard-welcome-title">¡Bienvenido, Juan!</div>
-            <div className="dashboard-welcome-subtitle">Gestiona tu condominio de manera inteligente con IA</div>
-            <div className="dashboard-quick-actions-row">
-              {quickActions.map((action, idx) => (
-                <DashboardQuickAction key={idx} {...action} />
-              ))}
-            </div>
-          </Card>
-          <div className="dashboard-metrics-row">
-            {metrics.map((metric, idx) => (
-              <DashboardMetric key={idx} {...metric} />
-            ))}
-          </div>
-          <div className="dashboard-bottom-row">
-            <div className="dashboard-bottom-left">
-              <DashboardActivity activities={activities} />
-            </div>
-            <div className="dashboard-bottom-right">
-              <DashboardAlert alerts={alerts} />
-            </div>
-          </div>
-        </div>
+
+const Dashboard = () => (
+  <DashboardLayout>
+    <Card className="dashboard-welcome-card">
+      <div className="dashboard-welcome-title">¡Bienvenido, Juan!</div>
+      <div className="dashboard-welcome-subtitle">Gestiona tu condominio de manera inteligente con IA</div>
+      <div className="dashboard-quick-actions-row">
+        {quickActions.map((action, idx) => (
+          <DashboardQuickAction key={idx} {...action} />
+        ))}
+      </div>
+    </Card>
+    <div className="dashboard-metrics-row">
+      {metrics.map((metric, idx) => (
+        <DashboardMetric key={idx} {...metric} />
+      ))}
+    </div>
+    <div className="dashboard-bottom-row">
+      <div className="dashboard-bottom-left">
+        <DashboardActivity activities={activities} />
+      </div>
+      <div className="dashboard-bottom-right">
+        <DashboardAlert alerts={alerts} />
       </div>
     </div>
-  );
-};
+  </DashboardLayout>
+);
 
 export default Dashboard;

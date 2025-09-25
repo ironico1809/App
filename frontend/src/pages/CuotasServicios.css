@@ -17,6 +17,13 @@
 .cs-date { background: transparent; color: var(--main-white); border: none; padding: 0.55rem; outline: none; }
 .cs-date-sep { color: var(--grey-medium); text-align: center; }
 
+.cs-export-section {
+  display: flex;
+  justify-content: flex-end;
+  margin: 1rem 0;
+  padding: 1rem 0;
+}
+
 .cs-table { width: 100%; }
 .cs-thead, .cs-row {
 	display: grid;

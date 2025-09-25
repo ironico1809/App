@@ -8,10 +8,12 @@
 
 /* Sidebar container */
 .sidebar {
-  position: fixed;
-  top: 0; left: 0;
+  position: fixed; /* Fixed para estar siempre visible */
+  top: 0;
+  left: 0;
   height: 100vh;
   width: 280px;
+  flex-shrink: 0; /* Mantiene el ancho fijo */
   background: linear-gradient(180deg, #2a1f3d 0%, #1e1632 100%);
   border-right: 1px solid rgba(255, 193, 7, 0.2);
   box-shadow: 4px 0 24px rgba(0,0,0,0.24);
