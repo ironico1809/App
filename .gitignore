@@ -1,0 +1,59 @@
+# Global ignores
+node_modules/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Django
+*.sqlite3
+db.sqlite3
+.env
+.env.*
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# VSCode
+.vscode/
+
+# Others
+package-lock.json
+
+# Ignore Docker local files
+*.pid
+
+# Ignore build output
+/dist
+/build
+
+# Ignore coverage
+coverage/
+
+# Ignore media/uploads
+backend/media/
+
+# Ignore system files
+*.swp
+*.swo
+
+# Ignore compiled files
+*.so
+
+# Ignore test output
+*.test.js
+
+# Ignore IDE
+.idea/
+
+# Ignore root node_modules
+/node_modules/
+
+# Ignore root .env
+/.env
