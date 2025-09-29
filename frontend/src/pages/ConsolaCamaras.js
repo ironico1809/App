@@ -2,135 +2,14 @@ import React, { useState, useEffect } from 'react';
 import DashboardLayout from '../components/DashboardLayout';
 import Button from '../components/Button';
 import Modal from '../components/Modal';
+import { obtenerCamaras } from '../services/camaras';
+import AgregarCamaraForm from '../components/AgregarCamaraForm';
+import CamaraLocal from '../components/CamaraLocal';
+import CamarasLocalesGrid from '../components/CamarasLocalesGrid';
+import ReconocimientoFacial from '../components/ReconocimientoFacial';
+import RegistrarRostro from '../components/RegistrarRostro';
 import './ConsolaCamaras.css';
-
-// Datos simulados basados en la BD real
-const camarasMock = [
-  {
-    id_camara: 1,
-    ubicacion: 'Lobby Principal',
-    descripcion: 'Entrada principal del condominio',
-    estado: 'ACTIVA',
-    streaming_url: '/api/stream/camera1',
-    last_event: '2024-09-24 08:15:32',
-    events_today: 12,
-    alert_level: 'normal'
-  },
-  {
-    id_camara: 2,
-    ubicacion: 'Estacionamiento Norte',
-    descripcion: 'Área de estacionamiento sector norte',
-    estado: 'ACTIVA',
-    streaming_url: '/api/stream/camera2',
-    last_event: '2024-09-24 09:23:18',
-    events_today: 8,
-    alert_level: 'normal'
-  },
-  {
-    id_camara: 3,
-    ubicacion: 'Piscina',
-    descripcion: 'Área de piscina y recreación',
-    estado: 'ACTIVA',
-    streaming_url: '/api/stream/camera3',
-    last_event: '2024-09-24 10:45:12',
-    events_today: 15,
-    alert_level: 'warning'
-  },
-  {
-    id_camara: 4,
-    ubicacion: 'Salón de Eventos',
-    descripcion: 'Salón de eventos y reuniones',
-    estado: 'ACTIVA',
-    streaming_url: '/api/stream/camera4',
-    last_event: '2024-09-24 07:30:45',
-    events_today: 3,
-    alert_level: 'normal'
-  },
-  {
-    id_camara: 5,
-    ubicacion: 'Gimnasio',
-    descripcion: 'Área de gimnasio y fitness',
-    estado: 'INACTIVA',
-    streaming_url: null,
-    last_event: '2024-09-23 18:22:10',
-    events_today: 0,
-    alert_level: 'error'
-  },
-  {
-    id_camara: 6,
-    ubicacion: 'Acceso Trasero',
-    descripcion: 'Puerta de acceso trasero',
-    estado: 'ACTIVA',
-    streaming_url: '/api/stream/camera6',
-    last_event: '2024-09-24 09:55:33',
-    events_today: 22,
-    alert_level: 'high'
-  },
-  {
-    id_camara: 7,
-    ubicacion: 'Jardines',
-    descripcion: 'Área de jardines y espacio verde',
-    estado: 'ACTIVA',
-    streaming_url: '/api/stream/camera7',
-    last_event: '2024-09-24 10:12:05',
-    events_today: 7,
-    alert_level: 'normal'
-  },
-  {
-    id_camara: 8,
-    ubicacion: 'Ascensor Principal',
-    descripcion: 'Interior del ascensor principal',
-    estado: 'MANTENIMIENTO',
-    streaming_url: null,
-    last_event: '2024-09-24 06:45:18',
-    events_today: 1,
-    alert_level: 'warning'
-  }
-];
-
-// Eventos recientes simulados
-const eventosRecientes = [
-  {
-    id_evento: 1,
-    id_camara: 6,
-    tipo_evento: 'MOVIMIENTO_SOSPECHOSO',
-    fecha_hora: '2024-09-24 10:55:33',
-    descripcion: 'Movimiento detectado en área restringida',
-    ubicacion: 'Acceso Trasero',
-    confianza: 85.2,
-    url_imagen: '/events/capture1.jpg'
-  },
-  {
-    id_evento: 2,
-    id_camara: 3,
-    tipo_evento: 'PERSONA_DETECTADA',
-    fecha_hora: '2024-09-24 10:45:12',
-    descripcion: 'Persona detectada fuera del horario permitido',
-    ubicacion: 'Piscina',
-    confianza: 92.7,
-    url_imagen: '/events/capture2.jpg'
-  },
-  {
-    id_evento: 3,
-    id_camara: 1,
-    tipo_evento: 'VISITANTE_NUEVO',
-    fecha_hora: '2024-09-24 10:30:15',
-    descripcion: 'Visitante no registrado detectado',
-    ubicacion: 'Lobby Principal',
-    confianza: 78.9,
-    url_imagen: '/events/capture3.jpg'
-  },
-  {
-    id_evento: 4,
-    id_camara: 2,
-    tipo_evento: 'VEHICULO_DESCONOCIDO',
-    fecha_hora: '2024-09-24 10:15:42',
-    descripcion: 'Vehículo con placa no registrada',
-    ubicacion: 'Estacionamiento Norte',
-    confianza: 89.4,
-    url_imagen: '/events/capture4.jpg'
-  }
-];
+import '../components/CamarasLocalesGrid.css';
 
 const tiposEvento = ['TODOS', 'MOVIMIENTO_SOSPECHOSO', 'PERSONA_DETECTADA', 'VISITANTE_NUEVO', 'VEHICULO_DESCONOCIDO'];
 const estadosCamara = ['TODAS', 'ACTIVA', 'INACTIVA', 'MANTENIMIENTO'];
@@ -145,6 +24,7 @@ const ConsolaCamaras = () => {
   const [eventoSeleccionado, setEventoSeleccionado] = useState(null);
   const [alertasActivas, setAlertasActivas] = useState(0);
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [camaras, setCamaras] = useState([]);
 
   // Actualizar reloj cada segundo
   useEffect(() => {
@@ -156,19 +36,29 @@ const ConsolaCamaras = () => {
 
   // Contar alertas activas
   useEffect(() => {
-    const alertas = camarasMock.filter(camara => 
+    const alertas = camaras.filter(camara => 
       camara.alert_level === 'warning' || camara.alert_level === 'high'
     ).length;
     setAlertasActivas(alertas);
+  }, [camaras]);
+
+  // Obtener cámaras del backend
+  const recargarCamaras = async () => {
+    try {
+      const data = await obtenerCamaras();
+      setCamaras(data);
+    } catch {
+      setCamaras([]);
+    }
+  };
+
+  useEffect(() => {
+    recargarCamaras();
   }, []);
 
-  const camarasFiltradas = camarasMock.filter(camara => {
-    const estadoMatch = filtroEstado === 'TODAS' || camara.estado === filtroEstado;
+  const camarasFiltradas = camaras.filter(camara => {
+    const estadoMatch = filtroEstado === 'TODAS' || (filtroEstado === 'ACTIVA' && camara.activa) || (filtroEstado === 'INACTIVA' && !camara.activa);
     return estadoMatch;
-  });
-
-  const eventosFiltrados = eventosRecientes.filter(evento => {
-    return filtroEvento === 'TODOS' || evento.tipo_evento === filtroEvento;
   });
 
   const abrirStreaming = (camara) => {
@@ -214,6 +104,7 @@ const ConsolaCamaras = () => {
 
   return (
     <DashboardLayout>
+      <AgregarCamaraForm onCamaraAgregada={recargarCamaras} />
       <div className="consola-camaras-page">
         {/* Header */}
         <div className="consola-camaras-header">
@@ -237,8 +128,10 @@ const ConsolaCamaras = () => {
             <div className="control-stat-card">
               <div className="stat-icon">📹</div>
               <div className="stat-info">
-                <h3>{camarasMock.filter(c => c.estado === 'ACTIVA').length}</h3>
+                <h3>{camaras.filter(c => c.estado === 'ACTIVA').length}</h3>
                 <span>Cámaras Activas</span>
+            {/* Reconocimiento facial */}
+            <ReconocimientoFacial />
               </div>
             </div>
             <div className="control-stat-card">
@@ -251,14 +144,14 @@ const ConsolaCamaras = () => {
             <div className="control-stat-card">
               <div className="stat-icon">📊</div>
               <div className="stat-info">
-                <h3>{eventosRecientes.length}</h3>
-                <span>Eventos Hoy</span>
+                <h3>{camaras.length}</h3>
+                <span>Total de Cámaras</span>
               </div>
             </div>
             <div className="control-stat-card">
               <div className="stat-icon">⚡</div>
               <div className="stat-info">
-                <h3>{camarasMock.filter(c => c.estado === 'INACTIVA').length}</h3>
+                <h3>{camaras.filter(c => c.estado === 'INACTIVA').length}</h3>
                 <span>Fuera de Línea</span>
               </div>
             </div>
@@ -300,6 +193,12 @@ const ConsolaCamaras = () => {
 
         {/* Vista Principal */}
         <div className="consola-main-content">
+          {/* Registro de rostro */}
+          <RegistrarRostro />
+          {/* Reconocimiento facial */}
+          <ReconocimientoFacial />
+          {/* Cámaras locales abajo */}
+          <CamarasLocalesGrid cantidad={2} />
           {vistaActual === 'mosaico' ? (
             <div className="camaras-mosaico">
               {camarasFiltradas.map(camara => (
@@ -417,7 +316,7 @@ const ConsolaCamaras = () => {
           </div>
 
           <div className="eventos-lista">
-            {eventosFiltrados.map(evento => (
+            {camarasFiltradas.map(evento => (
               <div key={evento.id_evento} className="evento-item" onClick={() => verEvento(evento)}>
                 <div className="evento-tiempo">
                   {evento.fecha_hora.split(' ')[1]}
@@ -509,10 +408,3 @@ const ConsolaCamaras = () => {
 };
 
 export default ConsolaCamaras;
-// --- Ejemplo de contenido de ReservarAreas.css para referencia visual o de estilos ---
-// Puedes copiar este bloque a un componente o mostrarlo en la UI si lo deseas
-/*
-@import '../styles/variables.css';
-
-... (todo el contenido de ReservarAreas.css aquí, o referencia a la ruta del archivo) ...
-*/

@@ -4,24 +4,11 @@ import Input from '../components/Input';
 import Button from '../components/Button';
 import ExportButtons from '../components/ExportButtons';
 import './GenerarReportes.css';
+import { getReporteUsoAreas } from '../services/reportes';
 
-// Datos simulados basados en la BD real
-const areasComunes = [
-  { id_area: 1, nombre: 'Salón de Eventos', descripcion: 'Espacio amplio para celebraciones' },
-  { id_area: 2, nombre: 'Cancha de Tenis', descripcion: 'Cancha profesional con iluminación' },
-  { id_area: 3, nombre: 'Piscina', descripcion: 'Piscina climatizada para adultos' },
-  { id_area: 4, nombre: 'Gimnasio', descripcion: 'Equipamiento completo de fitness' },
-  { id_area: 5, nombre: 'Salón de Reuniones', descripcion: 'Espacio para juntas y conferencias' }
-];
+import { obtenerAreasComunes } from '../services/areas';
 
-// Datos simulados de reservas para los reportes
-const datosReservas = [
-  { id_area: 1, area: 'Salón de Eventos', total_reservas: 45, confirmadas: 42, canceladas: 3, ingresos: 6300, promedio: 150 },
-  { id_area: 2, area: 'Cancha de Tenis', total_reservas: 128, confirmadas: 115, canceladas: 13, ingresos: 2875, promedio: 25 },
-  { id_area: 3, area: 'Piscina', total_reservas: 89, confirmadas: 85, canceladas: 4, ingresos: 4450, promedio: 50 },
-  { id_area: 4, area: 'Gimnasio', total_reservas: 203, confirmadas: 195, canceladas: 8, ingresos: 6085, promedio: 30 },
-  { id_area: 5, area: 'Salón de Reuniones', total_reservas: 67, confirmadas: 63, canceladas: 4, ingresos: 2520, promedio: 40 }
-];
+// Los datos de reservas ahora vendrán del backend
 
 const datosMensuales = [
   { mes: 'Enero', reservas: 89, ingresos: 4230 },
@@ -53,10 +40,11 @@ const GenerarReportes = () => {
     fechaFin: '2024-12-31',
     tipoReporte: 'ocupacion'
   });
-
-  const [datosReporte, setDatosReporte] = useState(datosReservas);
+  const [areasComunes, setAreasComunes] = useState([]);
+  const [datosReporte, setDatosReporte] = useState([]);
+  const [resumen, setResumen] = useState({ total_reservas: 0, confirmadas: 0, canceladas: 0, ingresos: 0, tasa_confirmacion: 0 });
   const [cargando, setCargando] = useState(false);
-  const [tipoVista, setTipoVista] = useState('tabla'); // 'tabla' o 'grafico'
+  const [tipoVista, setTipoVista] = useState('tabla');
 
   const handleFiltroChange = (campo, valor) => {
     setFiltros(prev => ({
@@ -67,34 +55,39 @@ const GenerarReportes = () => {
 
   const generarReporte = async () => {
     setCargando(true);
-    
-    // Simulamos llamada a la API
-    setTimeout(() => {
-      // Aquí iría la lógica real de filtrado basada en tu BD
-      let datosFiltrados = datosReservas;
-      
-      if (filtros.areaSeleccionada !== 'TODAS') {
-        datosFiltrados = datosReservas.filter(d => d.id_area === parseInt(filtros.areaSeleccionada));
-      }
-      
-      setDatosReporte(datosFiltrados);
-      setCargando(false);
-    }, 1500);
-  };
-
-  const calcularTotales = () => {
-    return datosReporte.reduce((acc, item) => ({
-      totalReservas: acc.totalReservas + item.total_reservas,
-      totalConfirmadas: acc.totalConfirmadas + item.confirmadas,
-      totalIngresos: acc.totalIngresos + item.ingresos
-    }), { totalReservas: 0, totalConfirmadas: 0, totalIngresos: 0 });
+    try {
+      const res = await getReporteUsoAreas({
+        fechaInicio: filtros.fechaInicio,
+        fechaFin: filtros.fechaFin,
+        areaId: filtros.areaSeleccionada
+      });
+      setDatosReporte(res.reporte_areas.map(area => ({
+        area: area.area,
+        total_reservas: area.total_reservas,
+        confirmadas: area.confirmadas,
+        canceladas: area.canceladas,
+        ingresos: area.ingresos,
+        promedio: area.promedio_reserva
+      })));
+      setResumen({
+        total_reservas: res.total_reservas,
+        confirmadas: res.confirmadas,
+        canceladas: res.canceladas,
+        ingresos: res.ingresos,
+        tasa_confirmacion: res.tasa_confirmacion
+      });
+    } catch (e) {
+      alert('Error al obtener el reporte: ' + e.message);
+    }
+    setCargando(false);
   };
 
   useEffect(() => {
+    // Cargar áreas comunes para el filtro
+    obtenerAreasComunes().then(data => setAreasComunes(data));
     generarReporte();
+    // eslint-disable-next-line
   }, []);
-
-  const totales = calcularTotales();
 
   return (
     <DashboardLayout>
@@ -106,110 +99,108 @@ const GenerarReportes = () => {
           </p>
         </div>
 
-          {/* Panel de filtros */}
-          <div className="filtros-panel">
-            <div className="filtros-grid">
-              <div className="filtro-group">
-                <label>Tipo de reporte</label>
-                <select
-                  value={filtros.tipoReporte}
-                  onChange={(e) => handleFiltroChange('tipoReporte', e.target.value)}
-                  className="filtro-select"
-                >
-                  <option value="ocupacion">Ocupación por área</option>
-                  <option value="temporal">Tendencias temporales</option>
-                  <option value="usuarios">Usuarios más activos</option>
-                  <option value="ingresos">Análisis de ingresos</option>
-                </select>
-              </div>
-
-              <div className="filtro-group">
-                <label>Área específica</label>
-                <select
-                  value={filtros.areaSeleccionada}
-                  onChange={(e) => handleFiltroChange('areaSeleccionada', e.target.value)}
-                  className="filtro-select"
-                >
-                  <option value="TODAS">Todas las áreas</option>
-                  {areasComunes.map(area => (
-                    <option key={area.id_area} value={area.id_area}>
-                      {area.nombre}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="filtro-group">
-                <label>Fecha inicio</label>
-                <Input
-                  type="date"
-                  value={filtros.fechaInicio}
-                  onChange={(e) => handleFiltroChange('fechaInicio', e.target.value)}
-                />
-              </div>
-
-              <div className="filtro-group">
-                <label>Fecha fin</label>
-                <Input
-                  type="date"
-                  value={filtros.fechaFin}
-                  onChange={(e) => handleFiltroChange('fechaFin', e.target.value)}
-                />
-              </div>
+        {/* Panel de filtros */}
+        <div className="filtros-panel">
+          <div className="filtros-grid">
+            <div className="filtro-group">
+              <label>Tipo de reporte</label>
+              <select
+                value={filtros.tipoReporte}
+                onChange={(e) => handleFiltroChange('tipoReporte', e.target.value)}
+                className="filtro-select"
+              >
+                <option value="ocupacion">Ocupación por área</option>
+                {/* Puedes agregar más tipos de reporte aquí */}
+              </select>
             </div>
 
-            <div className="filtros-actions">
-              <Button onClick={generarReporte} disabled={cargando}>
-                {cargando ? 'Generando...' : 'Generar Reporte'}
-              </Button>
-              <div className="vista-toggle">
-                <button
-                  className={`toggle-btn ${tipoVista === 'tabla' ? 'active' : ''}`}
-                  onClick={() => setTipoVista('tabla')}
-                >
-                  📊 Tabla
-                </button>
-                <button
-                  className={`toggle-btn ${tipoVista === 'grafico' ? 'active' : ''}`}
-                  onClick={() => setTipoVista('grafico')}
-                >
-                  📈 Gráfico
-                </button>
-              </div>
+            <div className="filtro-group">
+              <label>Área específica</label>
+              <select
+                value={filtros.areaSeleccionada}
+                onChange={(e) => handleFiltroChange('areaSeleccionada', e.target.value)}
+                className="filtro-select"
+              >
+                <option value="TODAS">Todas las áreas</option>
+                {areasComunes.map(area => (
+                  <option key={area.id} value={area.id}>
+                    {area.nombre}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="filtro-group">
+              <label>Fecha inicio</label>
+              <Input
+                type="date"
+                value={filtros.fechaInicio}
+                onChange={(e) => handleFiltroChange('fechaInicio', e.target.value)}
+              />
+            </div>
+
+            <div className="filtro-group">
+              <label>Fecha fin</label>
+              <Input
+                type="date"
+                value={filtros.fechaFin}
+                onChange={(e) => handleFiltroChange('fechaFin', e.target.value)}
+              />
             </div>
           </div>
 
-          {/* Métricas resumen */}
-          <div className="metricas-resumen">
-            <div className="metrica-card">
-              <div className="metrica-icon">📊</div>
-              <div className="metrica-info">
-                <h3>{totales.totalReservas}</h3>
-                <span>Total Reservas</span>
-              </div>
-            </div>
-            <div className="metrica-card">
-              <div className="metrica-icon">✅</div>
-              <div className="metrica-info">
-                <h3>{totales.totalConfirmadas}</h3>
-                <span>Confirmadas</span>
-              </div>
-            </div>
-            <div className="metrica-card">
-              <div className="metrica-icon">💰</div>
-              <div className="metrica-info">
-                <h3>${totales.totalIngresos.toLocaleString()}</h3>
-                <span>Ingresos Totales</span>
-              </div>
-            </div>
-            <div className="metrica-card">
-              <div className="metrica-icon">📈</div>
-              <div className="metrica-info">
-                <h3>{((totales.totalConfirmadas / totales.totalReservas) * 100).toFixed(1)}%</h3>
-                <span>Tasa de Confirmación</span>
-              </div>
+          <div className="filtros-actions">
+            <Button onClick={generarReporte} disabled={cargando}>
+              {cargando ? 'Generando...' : 'Generar Reporte'}
+            </Button>
+            <div className="vista-toggle">
+              <button
+                className={`toggle-btn ${tipoVista === 'tabla' ? 'active' : ''}`}
+                onClick={() => setTipoVista('tabla')}
+              >
+                📊 Tabla
+              </button>
+              <button
+                className={`toggle-btn ${tipoVista === 'grafico' ? 'active' : ''}`}
+                onClick={() => setTipoVista('grafico')}
+              >
+                📈 Gráfico
+              </button>
             </div>
           </div>
+        </div>
+
+        {/* Métricas resumen */}
+        <div className="metricas-resumen">
+          <div className="metrica-card">
+            <div className="metrica-icon">📊</div>
+            <div className="metrica-info">
+              <h3>{resumen.total_reservas}</h3>
+              <span>Total Reservas</span>
+            </div>
+          </div>
+          <div className="metrica-card">
+            <div className="metrica-icon">✅</div>
+            <div className="metrica-info">
+              <h3>{resumen.confirmadas}</h3>
+              <span>Confirmadas</span>
+            </div>
+          </div>
+          <div className="metrica-card">
+            <div className="metrica-icon">💰</div>
+            <div className="metrica-info">
+              <h3>${resumen.ingresos.toLocaleString()}</h3>
+              <span>Ingresos Totales</span>
+            </div>
+          </div>
+          <div className="metrica-card">
+            <div className="metrica-icon">📈</div>
+            <div className="metrica-info">
+              <h3>{resumen.tasa_confirmacion}%</h3>
+              <span>Tasa de Confirmación</span>
+            </div>
+          </div>
+        </div>
 
           {/* Contenido del reporte */}
           <div className="reporte-contenido">
@@ -265,20 +256,32 @@ const GenerarReportes = () => {
                   <div className="grafico-placeholder">
                     <div className="chart-container">
                       <h3>Gráfico de Ocupación</h3>
-                      <div className="chart-bars">
-                        {datosReporte.map((area, index) => (
-                          <div key={area.id_area} className="chart-bar">
-                            <div 
-                              className="bar" 
-                              style={{ 
-                                height: `${(area.total_reservas / Math.max(...datosReporte.map(d => d.total_reservas))) * 200}px`,
-                                backgroundColor: `hsl(${index * 60}, 70%, 50%)`
-                              }}
-                            ></div>
-                            <span className="bar-label">{area.area}</span>
-                            <span className="bar-value">{area.total_reservas}</span>
-                          </div>
-                        ))}
+                      <div className="chart-bars-enhanced">
+                        <div className="y-axis">
+                          <span>{Math.max(...datosReporte.map(d => d.total_reservas))}</span>
+                          <span>0</span>
+                        </div>
+                        <div className="bars-wrapper">
+                          {datosReporte.map((area, index) => {
+                            const max = Math.max(...datosReporte.map(d => d.total_reservas)) || 1;
+                            const height = (area.total_reservas / max) * 200;
+                            return (
+                              <div key={area.id_area} className="chart-bar-enhanced">
+                                <span className="bar-value-top">{area.total_reservas}</span>
+                                <div
+                                  className="bar enhanced"
+                                  style={{
+                                    height: `${height}px`,
+                                    background: `linear-gradient(180deg, hsl(${index * 60}, 80%, 60%) 0%, hsl(${index * 60}, 70%, 45%) 100%)`,
+                                    transition: 'height 0.7s cubic-bezier(0.4,0,0.2,1)'
+                                  }}
+                                ></div>
+                                <span className="bar-label">{area.area}</span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                        <div className="x-axis"></div>
                       </div>
                     </div>
                   </div>

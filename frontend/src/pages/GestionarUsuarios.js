@@ -5,15 +5,9 @@ import Button from '../components/Button';
 import Modal from '../components/Modal';
 import Badge from '../components/Badge';
 import './GestionarUsuarios.css';
+import { obtenerUsuarios, registrarUsuario, editarUsuario, eliminarUsuario, obtenerRoles, crearUsuarioRol } from '../services/api';
 
-const sampleUsers = [
-  { id: 1, nombre: 'Juan Pérez', correo: 'juanp@example.com', telefono: '+59170000001', rol: 'Administrador', estado: 'Activo' },
-  { id: 2, nombre: 'María López', correo: 'maria@example.com', telefono: '+59170000002', rol: 'Propietario', estado: 'Activo' },
-  { id: 3, nombre: 'Luis Rocha', correo: 'luisr@example.com', telefono: '+59170000003', rol: 'Inquilino', estado: 'Inactivo' },
-  { id: 4, nombre: 'Ana Gómez', correo: 'ana@example.com', telefono: '+59170000004', rol: 'Personal', estado: 'Activo' },
-];
-
-const roles = ['Todos','Administrador','Propietario','Inquilino','Personal'];
+// roles se llenará dinámicamente desde la API
 const estados = ['Todos','Activo','Inactivo'];
 
 const GestionarUsuarios = () => {
@@ -23,14 +17,35 @@ const GestionarUsuarios = () => {
   const [openModal, setOpenModal] = useState(false);
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState({ nombre_completo: '', correo: '', contrasena: '', telefono: '', estado: 'ACTIVO', rol: 'Propietario' });
+  const [usuarios, setUsuarios] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [rolesList, setRolesList] = useState([]);
+  const [asignarRolUser, setAsignarRolUser] = useState(null);
+  const [asignarRolId, setAsignarRolId] = useState('');
+  const [asignarRolLoading, setAsignarRolLoading] = useState(false);
+  // Cargar roles desde la API
+  React.useEffect(() => {
+    obtenerRoles().then(data => setRolesList(Array.isArray(data) ? data : []));
+  }, []);
+
+  // Obtener token del localStorage (ajusta según tu auth)
+  const token = localStorage.getItem('token');
+
+  React.useEffect(() => {
+    if (!token) return;
+    setLoading(true);
+    obtenerUsuarios(token).then(data => {
+      setUsuarios(Array.isArray(data) ? data : []);
+      setLoading(false);
+    });
+  }, [token]);
 
   const filtrados = useMemo(() => {
-    return sampleUsers.filter(u =>
-      (busqueda === '' || `${u.nombre} ${u.correo}`.toLowerCase().includes(busqueda.toLowerCase())) &&
-      (rol === 'Todos' || u.rol === rol) &&
-      (estado === 'Todos' || u.estado === estado)
+    return usuarios.filter(u =>
+      (busqueda === '' || `${u.nombre_completo} ${u.correo}`.toLowerCase().includes(busqueda.toLowerCase())) &&
+      (estado === 'Todos' || (u.estado?.toUpperCase() === estado.toUpperCase()))
     );
-  }, [busqueda, rol, estado]);
+  }, [usuarios, busqueda, estado]);
 
   const limpiar = () => { setBusqueda(''); setRol('Todos'); setEstado('Todos'); };
 
@@ -42,22 +57,41 @@ const GestionarUsuarios = () => {
 
   const openEdit = (u) => {
     setEditing(u);
-    setForm({ nombre_completo: u.nombre, correo: u.correo, contrasena: '', telefono: u.telefono || '', estado: u.estado?.toUpperCase() === 'ACTIVO' ? 'ACTIVO' : 'INACTIVO', rol: u.rol || 'Propietario' });
+    setForm({ nombre_completo: u.nombre_completo, correo: u.correo, contrasena: '', telefono: u.telefono || '', estado: u.estado?.toUpperCase() === 'ACTIVO' ? 'ACTIVO' : 'INACTIVO', rol: 'Propietario' });
     setOpenModal(true);
   };
 
-  const saveUser = (e) => {
+  const saveUser = async (e) => {
     e.preventDefault();
-    // Aquí iría la llamada al backend (POST/PUT). Por ahora mockeamos.
     if (!form.nombre_completo || !form.correo) { alert('Nombre y correo son obligatorios'); return; }
     if (!editing && !form.contrasena) { alert('La contraseña es obligatoria'); return; }
+    if (!token) { alert('No autenticado'); return; }
     setOpenModal(false);
-    alert(editing ? 'Usuario actualizado (mock)' : 'Usuario creado (mock)');
+    if (editing) {
+      await editarUsuario(editing.id, form, token);
+      alert('Usuario actualizado');
+    } else {
+      await registrarUsuario(form);
+      alert('Usuario creado');
+    }
+    // Refrescar lista
+    setLoading(true);
+    obtenerUsuarios(token).then(data => {
+      setUsuarios(Array.isArray(data) ? data : []);
+      setLoading(false);
+    });
   };
 
-  const deleteUser = (u) => {
-    if (window.confirm(`¿Eliminar usuario ${u.nombre}?`)) {
-      alert('Usuario eliminado (mock)');
+  const deleteUser = async (u) => {
+    if (window.confirm(`¿Eliminar usuario ${u.nombre_completo || u.nombre}?`)) {
+      if (!token) { alert('No autenticado'); return; }
+      await eliminarUsuario(u.id, token);
+      alert('Usuario eliminado');
+      setLoading(true);
+      obtenerUsuarios(token).then(data => {
+        setUsuarios(Array.isArray(data) ? data : []);
+        setLoading(false);
+      });
     }
   };
 
@@ -88,7 +122,8 @@ const GestionarUsuarios = () => {
                 rightElement={busqueda && <span onClick={() => setBusqueda('')}>✖</span>}
               />
               <select className="select-filter" value={rol} onChange={e => setRol(e.target.value)}>
-                {roles.map(r => <option key={r} value={r}>Filtrar por rol {r !== 'Todos' ? `: ${r}` : ''}</option>)}
+                <option value="Todos">Filtrar por rol</option>
+                {rolesList.map(r => <option key={r.id} value={r.nombre}>{r.nombre}</option>)}
               </select>
               <select className="select-filter" value={estado} onChange={e => setEstado(e.target.value)}>
                 {estados.map(s => <option key={s} value={s}>Filtrar por estado {s !== 'Todos' ? `: ${s}` : ''}</option>)}
@@ -98,22 +133,57 @@ const GestionarUsuarios = () => {
 
             <div className="table">
               <div className="thead">
-                <div>ID</div><div>Nombre</div><div>Correo</div><div>Teléfono</div><div>Rol</div><div>Estado</div><div>Acciones</div>
+                <div>ID</div>
+                <div>Nombre</div>
+                <div>Correo</div>
+                <div>Teléfono</div>
+                <div>Estado</div>
+                <div>Acciones</div>
               </div>
               {filtrados.map(u => (
                 <div className="trow" key={u.id}>
                   <div>{u.id}</div>
-                  <div>{u.nombre}</div>
+                  <div>{u.nombre_completo}</div>
                   <div>{u.correo}</div>
                   <div>{u.telefono}</div>
-                  <div>{u.rol}</div>
                   <div>{renderEstado(u.estado)}</div>
                   <div className="actions">
                     <Button className="outline" onClick={() => openEdit(u)}>Editar</Button>
                     <Button className="danger" onClick={() => deleteUser(u)}>Eliminar</Button>
+                    <Button onClick={() => { setAsignarRolUser(u); setAsignarRolId(''); }}>Asignar rol</Button>
                   </div>
                 </div>
               ))}
+      {/* Modal para asignar rol */}
+      <Modal open={!!asignarRolUser} title={asignarRolUser ? `Asignar rol a ${asignarRolUser.nombre_completo}` : ''} onClose={() => setAsignarRolUser(null)}>
+        {asignarRolUser && (
+          <form onSubmit={async e => {
+            e.preventDefault();
+            if (!asignarRolId) { alert('Selecciona un rol'); return; }
+            setAsignarRolLoading(true);
+            try {
+              await crearUsuarioRol({ usuario: asignarRolUser.id, rol: asignarRolId });
+              alert('Rol asignado correctamente');
+              setAsignarRolUser(null);
+            } catch (err) {
+              alert('Error al asignar rol');
+            }
+            setAsignarRolLoading(false);
+          }}>
+            <div className="field">
+              <label>Rol</label>
+              <select value={asignarRolId} onChange={e => setAsignarRolId(e.target.value)} required>
+                <option value="">Selecciona un rol</option>
+                {rolesList.map(r => <option key={r.id} value={r.id}>{r.nombre}</option>)}
+              </select>
+            </div>
+            <div className="form-actions">
+              <Button className="outline" type="button" onClick={() => setAsignarRolUser(null)}>Cancelar</Button>
+              <Button type="submit" disabled={asignarRolLoading}>{asignarRolLoading ? 'Asignando...' : 'Asignar rol'}</Button>
+            </div>
+          </form>
+        )}
+      </Modal>
             </div>
           </div>
           <Modal open={openModal} title={editing ? 'Editar usuario' : 'Nuevo usuario'} onClose={() => setOpenModal(false)}>

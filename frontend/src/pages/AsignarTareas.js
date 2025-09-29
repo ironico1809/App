@@ -4,75 +4,21 @@ import Input from '../components/Input';
 import Button from '../components/Button';
 import Modal from '../components/Modal';
 import './AsignarTareas.css';
-
-// Datos simulados basados en la BD real - tabla activo
-const activosMock = [
-  { id_activo: 1, nombre: 'Sistema de Climatización Central', tipo: 'HVAC', ubicacion: 'Edificio Principal', estado: 'OPERATIVO' },
-  { id_activo: 2, nombre: 'Bomba de Agua Principal', tipo: 'Bomba', ubicacion: 'Cuarto de Máquinas', estado: 'OPERATIVO' },
-  { id_activo: 3, nombre: 'Ascensor Torre A', tipo: 'Ascensor', ubicacion: 'Torre A', estado: 'MANTENIMIENTO' },
-  { id_activo: 4, nombre: 'Sistema de Seguridad CCTV', tipo: 'Seguridad', ubicacion: 'Perímetro', estado: 'OPERATIVO' },
-  { id_activo: 5, nombre: 'Iluminación Áreas Comunes', tipo: 'Eléctrico', ubicacion: 'Lobby', estado: 'OPERATIVO' },
-  { id_activo: 6, nombre: 'Sistema de Riego Jardines', tipo: 'Riego', ubicacion: 'Jardines', estado: 'OPERATIVO' }
-];
-
-// Datos simulados del personal de mantenimiento - tabla usuario con rol mantenimiento
-const personalMock = [
-  { id_usuario: 10, nombre: 'Carlos Méndez', especialidad: 'Eléctrico', carga_actual: 2, disponible: true },
-  { id_usuario: 11, nombre: 'Ana Torres', especialidad: 'Plomería', carga_actual: 1, disponible: true },
-  { id_usuario: 12, nombre: 'Roberto Silva', especialidad: 'HVAC', carga_actual: 3, disponible: true },
-  { id_usuario: 13, nombre: 'María González', especialidad: 'General', carga_actual: 4, disponible: false },
-  { id_usuario: 14, nombre: 'Diego Morales', especialidad: 'Jardinería', carga_actual: 1, disponible: true },
-  { id_usuario: 15, nombre: 'Laura Jiménez', especialidad: 'Limpieza', carga_actual: 2, disponible: true }
-];
-
-// Tareas de mantenimiento existentes - tabla tarea_mantenimiento
-const tareasMock = [
-  { 
-    id_tarea: 1, 
-    titulo: 'Mantenimiento preventivo HVAC',
-    descripcion: 'Revisión y limpieza del sistema de climatización',
-    id_activo: 1,
-    activo_nombre: 'Sistema de Climatización Central',
-    prioridad: 'MEDIA',
-    fecha_programada: '2024-02-15',
-    fecha_limite: '2024-02-20',
-    estado: 'PENDIENTE',
-    id_responsable: null,
-    responsable_nombre: null
-  },
-  { 
-    id_tarea: 2, 
-    titulo: 'Reparación bomba de agua',
-    descripcion: 'Cambio de sellos y revisión general',
-    id_activo: 2,
-    activo_nombre: 'Bomba de Agua Principal',
-    prioridad: 'ALTA',
-    fecha_programada: '2024-02-10',
-    fecha_limite: '2024-02-12',
-    estado: 'ASIGNADA',
-    id_responsable: 11,
-    responsable_nombre: 'Ana Torres'
-  },
-  { 
-    id_tarea: 3, 
-    titulo: 'Inspección ascensor',
-    descripcion: 'Revisión mensual de seguridad y funcionamiento',
-    id_activo: 3,
-    activo_nombre: 'Ascensor Torre A',
-    prioridad: 'ALTA',
-    fecha_programada: '2024-02-08',
-    fecha_limite: '2024-02-10',
-    estado: 'EN_PROGRESO',
-    id_responsable: 10,
-    responsable_nombre: 'Carlos Méndez'
-  }
-];
+import { 
+  obtenerTareas, 
+  crearTarea, 
+  actualizarTarea, 
+  obtenerUsuarios, 
+  obtenerUsuariosPersonal, 
+  obtenerActivos 
+} from '../services/api';
 
 const prioridades = ['BAJA', 'MEDIA', 'ALTA', 'URGENTE'];
 const estados = ['PENDIENTE', 'ASIGNADA', 'EN_PROGRESO', 'COMPLETADA', 'CANCELADA'];
 
 const AsignarTareas = () => {
-  const [tareas, setTareas] = useState(tareasMock);
+  const [activos, setActivos] = useState([]);
+  const [tareas, setTareas] = useState([]);
   const [filtroEstado, setFiltroEstado] = useState('TODAS');
   const [filtroPrioridad, setFiltroPrioridad] = useState('TODAS');
   const [filtroPersonal, setFiltroPersonal] = useState('TODOS');
@@ -88,13 +34,81 @@ const AsignarTareas = () => {
     id_activo: '',
     prioridad: 'MEDIA',
     fecha_programada: '',
-    fecha_limite: ''
+    fecha_limite: '',
+    responsable: '' // Nuevo campo para el responsable
   });
 
   const [formAsignacion, setFormAsignacion] = useState({
     id_responsable: '',
     notas: ''
   });
+
+  const [usuarios, setUsuarios] = useState([]); // usuarios reales
+  const [usuariosPersonal, setUsuariosPersonal] = useState([]); // solo personal
+
+  // Cargar usuarios reales al montar
+  useEffect(() => {
+    async function fetchUsuarios() {
+      try {
+        const data = await obtenerUsuarios();
+        setUsuarios(data);
+      } catch (e) {
+        setUsuarios([]);
+      }
+    }
+    fetchUsuarios();
+  }, []);
+
+  // Cargar solo personal al montar
+  useEffect(() => {
+    async function fetchUsuariosPersonal() {
+      try {
+        const data = await obtenerUsuariosPersonal();
+        setUsuariosPersonal(data);
+      } catch (e) {
+        setUsuariosPersonal([]);
+      }
+    }
+    fetchUsuariosPersonal();
+  }, []);
+
+  // Hook para cargar activos reales
+  useEffect(() => {
+    async function fetchActivos() {
+      try {
+        const data = await obtenerActivos();
+        setActivos(data);
+      } catch (e) {
+        setActivos([]);
+      }
+    }
+    fetchActivos();
+  }, []);
+
+  // Cargar tareas reales al montar
+  useEffect(() => {
+    async function fetchTareas() {
+      try {
+        const data = await obtenerTareas();
+        setTareas(data.map(t => ({
+          id_tarea: t.id,
+          titulo: t.titulo,
+          descripcion: t.descripcion,
+          prioridad: t.prioridad || 'MEDIA',
+          activo: t.activo,
+          activo_nombre: t.activo_nombre || '',
+          fecha_programada: t.fecha_asignacion || '',
+          fecha_limite: t.fecha_limite || '',
+          estado: t.estado ? t.estado.toUpperCase() : 'PENDIENTE',
+          id_responsable: t.responsable || null,
+          responsable_nombre: t.responsable_nombre || null
+        })));
+      } catch (e) {
+        setTareas([]);
+      }
+    }
+    fetchTareas();
+  }, []);
 
   const limpiarFiltros = () => {
     setFiltroEstado('TODAS');
@@ -126,7 +140,8 @@ const AsignarTareas = () => {
         id_activo: tarea.id_activo,
         prioridad: tarea.prioridad,
         fecha_programada: tarea.fecha_programada,
-        fecha_limite: tarea.fecha_limite
+        fecha_limite: tarea.fecha_limite,
+        responsable: tarea.id_responsable || '' // Asegurarse de que el campo responsable esté presente
       });
     } else {
       setEditingTarea(null);
@@ -136,7 +151,8 @@ const AsignarTareas = () => {
         id_activo: '',
         prioridad: 'MEDIA',
         fecha_programada: '',
-        fecha_limite: ''
+        fecha_limite: '',
+        responsable: ''
       });
     }
     setOpenModal(true);
@@ -151,39 +167,55 @@ const AsignarTareas = () => {
     setModalAsignar(true);
   };
 
-  const guardarTarea = () => {
-    const activoSeleccionado = activosMock.find(a => a.id_activo === parseInt(formTarea.id_activo));
-    
-    if (editingTarea) {
-      // Editar tarea existente
-      setTareas(prev => prev.map(t => 
-        t.id_tarea === editingTarea.id_tarea 
-          ? {
-              ...t,
-              ...formTarea,
-              activo_nombre: activoSeleccionado?.nombre || t.activo_nombre
-            }
-          : t
-      ));
-    } else {
-      // Crear nueva tarea
-      const nuevaTarea = {
-        id_tarea: Math.max(...tareas.map(t => t.id_tarea)) + 1,
-        ...formTarea,
-        activo_nombre: activoSeleccionado?.nombre || 'Activo no encontrado',
-        estado: 'PENDIENTE',
-        id_responsable: null,
-        responsable_nombre: null
-      };
-      setTareas(prev => [nuevaTarea, ...prev]);
+  const guardarTarea = async () => {
+    const hoy = new Date().toISOString().slice(0, 10); // yyyy-mm-dd
+    if (!formTarea.titulo || !formTarea.descripcion || !formTarea.fecha_limite || !formTarea.responsable) {
+      alert('Completa todos los campos obligatorios');
+      return;
     }
-    
-    setOpenModal(false);
-    alert(editingTarea ? 'Tarea actualizada exitosamente' : 'Tarea creada exitosamente');
+    const tareaPayload = {
+      titulo: formTarea.titulo,
+      descripcion: formTarea.descripcion,
+      activo: formTarea.id_activo ? parseInt(formTarea.id_activo) : null,
+      prioridad: formTarea.prioridad,
+      fecha_asignacion: hoy,
+      fecha_limite: formTarea.fecha_limite,
+      estado: 'pendiente',
+      responsable: formTarea.responsable // Enviar responsable
+    };
+    try {
+      if (editingTarea) {
+        await actualizarTarea(editingTarea.id_tarea, tareaPayload);
+      } else {
+        await crearTarea(tareaPayload);
+      }
+      setOpenModal(false);
+      alert(editingTarea ? 'Tarea actualizada exitosamente' : 'Tarea creada exitosamente');
+      // Recargar tareas
+      const data = await obtenerTareas();
+      setTareas(data.map(t => ({
+        id_tarea: t.id,
+        titulo: t.titulo,
+        descripcion: t.descripcion,
+        prioridad: t.prioridad || 'MEDIA',
+        fecha_programada: t.fecha_asignacion || '',
+        fecha_limite: t.fecha_limite || '',
+        estado: t.estado ? t.estado.toUpperCase() : 'PENDIENTE',
+        id_responsable: t.responsable || null,
+        responsable_nombre: t.responsable_nombre || null
+      })));
+    } catch (e) {
+      if (e instanceof Response) {
+        const errorData = await e.json();
+        alert('Error al guardar la tarea: ' + JSON.stringify(errorData));
+      } else {
+        alert('Error al guardar la tarea');
+      }
+    }
   };
 
   const asignarTarea = () => {
-    const personalSeleccionado = personalMock.find(p => p.id_usuario === parseInt(formAsignacion.id_responsable));
+    const personalSeleccionado = usuariosPersonal.find(p => p.id_usuario === parseInt(formAsignacion.id_responsable));
     
     if (!personalSeleccionado) {
       alert('Debe seleccionar un responsable');
@@ -311,7 +343,7 @@ const AsignarTareas = () => {
               >
                 <option value="TODOS">Todo el personal</option>
                 <option value="SIN_ASIGNAR">Sin asignar</option>
-                {personalMock.map(personal => (
+                {usuariosPersonal.map(personal => (
                   <option key={personal.id_usuario} value={personal.id_usuario}>
                     {personal.nombre}
                   </option>
@@ -444,137 +476,143 @@ const AsignarTareas = () => {
         </div>
 
         {/* Modal Nueva/Editar Tarea */}
-        <Modal 
-          isOpen={openModal} 
-          onClose={() => setOpenModal(false)}
-          title={editingTarea ? 'Editar Tarea' : 'Nueva Tarea de Mantenimiento'}
-        >
-          <div className="modal-form">
-            <div className="form-group">
-              <label>Título de la tarea *</label>
-              <Input
-                type="text"
-                placeholder="Ej: Mantenimiento preventivo..."
-                value={formTarea.titulo}
-                onChange={(e) => setFormTarea({...formTarea, titulo: e.target.value})}
-                required
-              />
-            </div>
-
-            <div className="form-group">
-              <label>Descripción *</label>
-              <textarea
-                placeholder="Descripción detallada de la tarea..."
-                value={formTarea.descripcion}
-                onChange={(e) => setFormTarea({...formTarea, descripcion: e.target.value})}
-                className="form-textarea"
-                rows="3"
-                required
-              />
-            </div>
-
-            <div className="form-row">
+        {openModal && (
+          <Modal 
+            onClose={() => setOpenModal(false)}
+            title={editingTarea ? 'Editar Tarea' : 'Nueva Tarea de Mantenimiento'}
+          >
+            <div className="modal-form">
               <div className="form-group">
-                <label>Activo *</label>
-                <select
-                  value={formTarea.id_activo}
-                  onChange={(e) => setFormTarea({...formTarea, id_activo: e.target.value})}
-                  className="form-select"
-                  required
-                >
-                  <option value="">Seleccionar activo</option>
-                  {activosMock.map(activo => (
-                    <option key={activo.id_activo} value={activo.id_activo}>
-                      {activo.nombre} - {activo.ubicacion}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="form-group">
-                <label>Prioridad *</label>
-                <select
-                  value={formTarea.prioridad}
-                  onChange={(e) => setFormTarea({...formTarea, prioridad: e.target.value})}
-                  className="form-select"
-                >
-                  {prioridades.map(prioridad => (
-                    <option key={prioridad} value={prioridad}>{prioridad}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            <div className="form-row">
-              <div className="form-group">
-                <label>Fecha Programada *</label>
+                <label>Título de la tarea *</label>
                 <Input
-                  type="date"
-                  value={formTarea.fecha_programada}
-                  onChange={(e) => setFormTarea({...formTarea, fecha_programada: e.target.value})}
+                  type="text"
+                  placeholder="Ej: Mantenimiento preventivo..."
+                  value={formTarea.titulo}
+                  onChange={(e) => setFormTarea({...formTarea, titulo: e.target.value})}
                   required
                 />
               </div>
-
               <div className="form-group">
-                <label>Fecha Límite *</label>
-                <Input
-                  type="date"
-                  value={formTarea.fecha_limite}
-                  onChange={(e) => setFormTarea({...formTarea, fecha_limite: e.target.value})}
+                <label>Descripción *</label>
+                <textarea
+                  placeholder="Descripción detallada de la tarea..."
+                  value={formTarea.descripcion}
+                  onChange={(e) => setFormTarea({...formTarea, descripcion: e.target.value})}
+                  className="form-textarea"
+                  rows="3"
                   required
                 />
               </div>
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Activo *</label>
+                  <select
+                    value={formTarea.id_activo}
+                    onChange={(e) => setFormTarea({...formTarea, id_activo: e.target.value})}
+                    className="form-select"
+                    required
+                  >
+                    <option value="">Seleccionar activo</option>
+                    {activos.map(activo => (
+                      <option key={activo.id} value={activo.id}>
+                        {activo.nombre} - {activo.descripcion}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label>Responsable *</label>
+                  <select
+                    value={formTarea.responsable}
+                    onChange={e => setFormTarea({ ...formTarea, responsable: e.target.value })}
+                    className="form-select"
+                    required
+                  >
+                    <option value="">Seleccionar responsable</option>
+                    {usuariosPersonal.map(usuario => (
+                      <option key={usuario.id} value={usuario.id}>
+                        {usuario.nombre_completo} ({usuario.correo})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Fecha Programada *</label>
+                  <Input
+                    type="date"
+                    value={formTarea.fecha_programada}
+                    onChange={(e) => setFormTarea({...formTarea, fecha_programada: e.target.value})}
+                    required
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Fecha Límite *</label>
+                  <Input
+                    type="date"
+                    value={formTarea.fecha_limite}
+                    onChange={(e) => setFormTarea({...formTarea, fecha_limite: e.target.value})}
+                    required
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Prioridad *</label>
+                  <select
+                    value={formTarea.prioridad}
+                    onChange={e => setFormTarea({ ...formTarea, prioridad: e.target.value })}
+                    className="form-select"
+                    required
+                  >
+                    {prioridades.map(p => (
+                      <option key={p} value={p}>{p}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              <div className="modal-actions">
+                <Button onClick={() => setOpenModal(false)} className="btn-secondary">
+                  Cancelar
+                </Button>
+                <Button onClick={guardarTarea} className="btn-primary">
+                  {editingTarea ? 'Actualizar' : 'Crear'} Tarea
+                </Button>
+              </div>
             </div>
-
-            <div className="modal-actions">
-              <Button onClick={() => setOpenModal(false)} className="btn-secondary">
-                Cancelar
-              </Button>
-              <Button onClick={guardarTarea} className="btn-primary">
-                {editingTarea ? 'Actualizar' : 'Crear'} Tarea
-              </Button>
-            </div>
-          </div>
-        </Modal>
+          </Modal>
+        )}
 
         {/* Modal Asignar Tarea */}
-        <Modal 
-          isOpen={modalAsignar} 
-          onClose={() => setModalAsignar(false)}
-          title="Asignar Tarea de Mantenimiento"
-        >
-          <div className="modal-form">
-            {tareaParaAsignar && (
-              <div className="tarea-asignar-info">
-                <h3>{tareaParaAsignar.titulo}</h3>
-                <p><strong>Activo:</strong> {tareaParaAsignar.activo_nombre}</p>
-                <p><strong>Prioridad:</strong> <span className={`badge-prioridad ${getPrioridadClass(tareaParaAsignar.prioridad)}`}>
-                  {tareaParaAsignar.prioridad}
-                </span></p>
-              </div>
-            )}
-
-            <div className="form-group">
-              <label>Personal Responsable *</label>
-              <select
+        {modalAsignar && (
+          <Modal 
+            onClose={() => setModalAsignar(false)}
+            title="Asignar Tarea de Mantenimiento"
+          >
+            <div className="modal-form">
+              {tareaParaAsignar && (
+                <div className="tarea-asignar-info">
+                  <h3>{tareaParaAsignar.titulo}</h3>
+                  <p><strong>Activo:</strong> {tareaParaAsignar.activo_nombre}</p>
+                  <p><strong>Prioridad:</strong> <span className={`badge-prioridad ${getPrioridadClass(tareaParaAsignar.prioridad)}`}>
+                    {tareaParaAsignar.prioridad}
+                  </span></p>
+                </div>
+              )}
+              <div className="form-group">
+                <label>Personal Responsable *</label>
+                <select
                 value={formAsignacion.id_responsable}
                 onChange={(e) => setFormAsignacion({...formAsignacion, id_responsable: e.target.value})}
                 className="form-select"
                 required
               >
                 <option value="">Seleccionar responsable</option>
-                {personalMock.map(personal => (
+                {usuariosPersonal.map(personal => (
                   <option 
-                    key={personal.id_usuario} 
-                    value={personal.id_usuario}
-                    disabled={!personal.disponible}
+                    key={personal.id} 
+                    value={personal.id}
                   >
-                    {personal.nombre} - {personal.especialidad} 
-                    {personal.disponible 
-                      ? ` (${personal.carga_actual} tareas)` 
-                      : ' (No disponible)'
-                    }
+                    {personal.nombre_completo} ({personal.correo})
                   </option>
                 ))}
               </select>
@@ -601,6 +639,7 @@ const AsignarTareas = () => {
             </div>
           </div>
         </Modal>
+        )}
       </div>
     </DashboardLayout>
   );

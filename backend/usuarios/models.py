@@ -18,6 +18,16 @@ class Usuario(models.Model):
 	def is_active(self):
 		return self.estado == 'ACTIVO'
 
+# Modelo para reconocimiento facial de residentes
+class RostroResidente(models.Model):
+	usuario = models.ForeignKey('Usuario', on_delete=models.CASCADE, related_name='rostros')
+	imagen = models.ImageField(upload_to='rostros_residentes/')
+	encoding = models.BinaryField(blank=True, null=True, editable=True)  # Para guardar el embedding facial
+	fecha_registro = models.DateTimeField(auto_now_add=True)
+
+	def __str__(self):
+		return f"Rostro de {self.usuario.nombre_completo} ({self.id})"
+
 class Rol(models.Model):
 	nombre = models.CharField(max_length=50, unique=True)
 	descripcion = models.CharField(max_length=100, blank=True)

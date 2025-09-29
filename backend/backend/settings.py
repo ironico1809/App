@@ -1,3 +1,12 @@
+from pathlib import Path
+import os
+from dotenv import load_dotenv
+
+# Build paths inside the project like this: BASE_DIR / 'subdir'.
+BASE_DIR = Path(__file__).resolve().parent.parent
+
+load_dotenv(os.path.join(BASE_DIR, '.env'))
+
 # Backend de autenticación personalizado para login con correo
 AUTHENTICATION_BACKENDS = [
     'usuarios.auth_backend.UsuarioAuthBackend',
@@ -21,21 +30,18 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
-from pathlib import Path
-
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
-BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-9v@@nv2&y*qma4l987smoap-beg_(pa9f$6(+g157lv*$l!5iq'
+SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-9v@@nv2&y*qma4l987smoap-beg_(pa9f$6(+g157lv*$l!5iq')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
 
-ALLOWED_HOSTS = []
+# Para desarrollo local, forzamos DEBUG=True y ALLOWED_HOSTS seguro
+DEBUG = True
+ALLOWED_HOSTS = ['localhost', '127.0.0.1']
 
 # Application definition
 
@@ -51,6 +57,9 @@ INSTALLED_APPS = [
     'rest_framework',
     'finanzas',
     'corsheaders',
+    'avisos',
+    'areas',
+    'camaras',
 ]
 
 
@@ -66,6 +75,7 @@ MIDDLEWARE = [
 ]
 # Permitir todos los orígenes para desarrollo (CORS)
 CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOWED_ORIGINS = os.getenv('CORS_ALLOWED_ORIGINS', '').split(',') if os.getenv('CORS_ALLOWED_ORIGINS') else []
 
 ROOT_URLCONF = 'backend.urls'
 
@@ -92,11 +102,11 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'SmartCondominium',
-        'USER': 'postgres',
-        'PASSWORD': '221180',
-        'HOST': 'localhost',
-        'PORT': '5432',
+        'NAME': os.getenv('DB_NAME', 'SmartCondominium'),
+        'USER': os.getenv('DB_USER', 'postgres'),
+        'PASSWORD': os.getenv('DB_PASSWORD', '221180'),
+        'HOST': os.getenv('DB_HOST', 'localhost'),
+        'PORT': os.getenv('DB_PORT', '5432'),
     }
 }
 
@@ -132,7 +142,10 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field

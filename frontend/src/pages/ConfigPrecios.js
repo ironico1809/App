@@ -1,22 +1,36 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
+import { obtenerCuotasServicio, crearCuotaServicio, obtenerMultas, crearMulta, editarCuotaServicio, eliminarCuotaServicio, editarMulta, eliminarMulta } from '../services/api';
 import DashboardLayout from '../components/DashboardLayout';
 import Button from '../components/Button';
 import Modal from '../components/Modal';
 import './ConfigPrecios.css';
 
-// Catálogo unificado con campos del esquema: cuota_servicio y multa
-const preciosMock = [
-  { id: 1, tipo: 'EXPENSA', nombre: 'Expensa mensual', descripcion: 'Cuota base por unidad habitacional - Incluye mantenimiento de áreas comunes', monto: 350.00, fecha_creacion: '2025-01-01', vigente: true },
-  { id: 2, tipo: 'SERVICIO', nombre: 'Servicio de Agua', descripcion: 'Consumo estimado promedio mensual por unidad', monto: 45.50, fecha_creacion: '2025-06-01', vigente: true },
-  { id: 3, tipo: 'MULTA', nombre: '', descripcion: 'Multa por ruido nocturno después de las 22:00 hrs', monto: 120.00, fecha_creacion: '2025-07-01', vigente: true },
-  { id: 4, tipo: 'SERVICIO', nombre: 'Internet y Cable', descripcion: 'Servicio de internet fibra óptica 100MB + TV cable básico', monto: 85.00, fecha_creacion: '2025-01-15', vigente: true },
-  { id: 5, tipo: 'EXPENSA', nombre: 'Seguridad', descripcion: 'Servicio de seguridad 24/7 y monitoreo IA', monto: 180.00, fecha_creacion: '2025-02-01', vigente: true },
-  { id: 6, tipo: 'MULTA', nombre: '', descripcion: 'Multa por mascotas sin correa en áreas comunes', monto: 80.00, fecha_creacion: '2025-03-01', vigente: false },
-  { id: 7, tipo: 'SERVICIO', nombre: 'Mantenimiento', descripcion: 'Servicio de limpieza y mantenimiento de pasillos', monto: 65.00, fecha_creacion: '2025-04-01', vigente: true },
-  { id: 8, tipo: 'MULTA', nombre: '', descripcion: 'Multa por estacionamiento en lugar no autorizado', monto: 150.00, fecha_creacion: '2025-05-01', vigente: true },
-];
+
+// Unifica cuotas-servicio y multas en un solo array para la tabla
+function unirPrecios(cuotas, multas) {
+  const cuotasMap = (cuotas || []).map(c => ({
+    id: c.id,
+    tipo: c.tipo === 'EXPENSA' || c.tipo === 'SERVICIO' ? c.tipo : 'EXPENSA',
+    nombre: c.nombre,
+    descripcion: c.descripcion,
+    monto: c.monto,
+    fecha_creacion: c.fecha_creacion,
+    vigente: c.vigente !== undefined ? c.vigente : true
+  }));
+  const multasMap = (multas || []).map(m => ({
+    id: 'M' + m.id,
+    tipo: 'MULTA',
+    nombre: '',
+    descripcion: m.descripcion,
+    monto: m.monto,
+    fecha_creacion: m.fecha_creacion,
+    vigente: true // Puedes agregar campo si lo tienes en modelo
+  }));
+  return [...cuotasMap, ...multasMap];
+}
 
 const tipos = ['Todos', 'EXPENSA', 'SERVICIO', 'MULTA'];
+
 
 const ConfigPrecios = () => {
   const [q, setQ] = useState('');
@@ -25,13 +39,33 @@ const ConfigPrecios = () => {
   const [openModal, setOpenModal] = useState(false);
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState({ tipo: 'EXPENSA', nombre: '', descripcion: '', monto: '', vigente: true });
+  const [cuotas, setCuotas] = useState([]);
+  const [multas, setMultas] = useState([]);
+  const [loading, setLoading] = useState(false);
 
-  const filtrados = useMemo(() => preciosMock.filter(p => {
+  // Cargar datos reales al montar
+  useEffect(() => {
+    async function fetchData() {
+      setLoading(true);
+      const [cuotasData, multasData] = await Promise.all([
+        obtenerCuotasServicio(),
+        obtenerMultas()
+      ]);
+      setCuotas(cuotasData);
+      setMultas(multasData);
+      setLoading(false);
+    }
+    fetchData();
+  }, []);
+
+  // Unificar y filtrar
+  const precios = useMemo(() => unirPrecios(cuotas, multas), [cuotas, multas]);
+  const filtrados = useMemo(() => precios.filter(p => {
     const byQ = q === '' || `${p.nombre} ${p.descripcion}`.toLowerCase().includes(q.toLowerCase());
     const byTipo = tipo === 'Todos' || p.tipo === tipo;
     const byVigente = !soloVigentes || p.vigente;
     return byQ && byTipo && byVigente;
-  }), [q, tipo, soloVigentes]);
+  }), [q, tipo, soloVigentes, precios]);
 
   const limpiar = () => { 
     setQ(''); 
@@ -45,32 +79,95 @@ const ConfigPrecios = () => {
     setOpenModal(true); 
   };
 
-  const openEdit = (p) => { 
-    setEditing(p); 
-    setForm({ 
-      tipo: p.tipo, 
-      nombre: p.nombre || '', 
-      descripcion: p.descripcion || '', 
+
+  const openEdit = (p) => {
+    setEditing(p);
+    setForm({
+      tipo: p.tipo,
+      nombre: p.nombre || '',
+      descripcion: p.descripcion || '',
       monto: p.monto,
-      vigente: p.vigente 
-    }); 
-    setOpenModal(true); 
+      vigente: p.vigente
+    });
+    setOpenModal(true);
   };
 
-  const save = (e) => { 
-    e.preventDefault(); 
-    if (!form.tipo || (!form.nombre && form.tipo !== 'MULTA') || !form.monto || !form.descripcion) { 
-      alert('Completa todos los campos obligatorios'); 
-      return; 
-    } 
-    setOpenModal(false); 
-    alert(editing ? 'Precio actualizado correctamente' : 'Nuevo precio creado exitosamente'); 
+
+  // Guardar nuevo registro (POST a la API)
+  const save = async (e) => {
+    e.preventDefault();
+    if (!form.tipo || (!form.nombre && form.tipo !== 'MULTA') || !form.monto || !form.descripcion) {
+      alert('Completa todos los campos obligatorios');
+      return;
+    }
+    setLoading(true);
+    try {
+      if (editing) {
+        // Editar
+        if (form.tipo === 'MULTA') {
+          const multaId = editing.id.toString().replace('M', '');
+          await editarMulta(multaId, { descripcion: form.descripcion, monto: form.monto });
+        } else {
+          await editarCuotaServicio(editing.id, {
+            nombre: form.nombre,
+            descripcion: form.descripcion,
+            monto: form.monto,
+            tipo: form.tipo,
+            vigente: form.vigente
+          });
+        }
+      } else {
+        // Crear
+        if (form.tipo === 'MULTA') {
+          await crearMulta({ descripcion: form.descripcion, monto: form.monto });
+        } else {
+          await crearCuotaServicio({
+            nombre: form.nombre,
+            descripcion: form.descripcion,
+            monto: form.monto,
+            tipo: form.tipo,
+            vigente: form.vigente
+          });
+        }
+      }
+      // Recargar datos
+      const [cuotasData, multasData] = await Promise.all([
+        obtenerCuotasServicio(),
+        obtenerMultas()
+      ]);
+      setCuotas(cuotasData);
+      setMultas(multasData);
+      setOpenModal(false);
+      alert(editing ? 'Precio actualizado correctamente' : 'Nuevo precio creado exitosamente');
+    } catch (err) {
+      alert('Error al guardar.');
+    }
+    setLoading(false);
   };
 
-  const remove = (p) => { 
-    if (window.confirm(`¿Estás seguro de eliminar ${p.tipo.toLowerCase()} "${p.nombre || p.descripcion}"?`)) { 
-      alert('Registro eliminado correctamente'); 
-    } 
+
+  const remove = async (p) => {
+    if (!window.confirm(`¿Estás seguro de eliminar ${p.tipo.toLowerCase()} "${p.nombre || p.descripcion}"?`)) return;
+    setLoading(true);
+    try {
+      if (p.tipo === 'MULTA') {
+        const multaId = p.id.toString().replace('M', '');
+        await eliminarMulta(multaId);
+      } else {
+        await eliminarCuotaServicio(p.id);
+      }
+      // Recargar datos
+      const [cuotasData, multasData] = await Promise.all([
+        obtenerCuotasServicio(),
+        obtenerMultas()
+      ]);
+      setCuotas(cuotasData);
+      setMultas(multasData);
+      alert('Registro eliminado correctamente');
+    } catch (err) {
+      alert('Error al eliminar.');
+    }
+    setLoading(false);
   };
 
   const toggleVigencia = (p) => {

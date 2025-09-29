@@ -1,6 +1,10 @@
-import React, { useState } from 'react';
+import * as XLSX from 'xlsx';
+import React, { useState, useRef } from 'react';
 import Button from './Button';
 import './ExportButtons.css';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import Chart from 'chart.js/auto';
 
 /**
  * Componente para exportar reportes en PDF y Excel - CU-26
@@ -24,40 +28,102 @@ const ExportButtons = ({
 }) => {
   const [isExporting, setIsExporting] = useState(false);
   const [exportingFormat, setExportingFormat] = useState(null);
+  const chartRef = useRef();
 
   // Función para exportar a PDF
+  // Renderiza el gráfico en un canvas oculto y retorna la imagen base64
+  const renderChartToImage = () => {
+    return new Promise((resolve) => {
+      // Elimina canvas anterior si existe
+      if (chartRef.current) {
+        chartRef.current.remove();
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = 600;
+      canvas.height = 300;
+      canvas.style.display = 'none';
+      document.body.appendChild(canvas);
+      chartRef.current = canvas;
+      const ctx = canvas.getContext('2d');
+      const labels = data.map(row => row.area || row.nombre || row.id_area || 'Área');
+      const values = data.map(row => row.total_reservas || row.reservas || 0);
+      const chart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels,
+          datasets: [{
+            label: 'Reservas',
+            data: values,
+            backgroundColor: 'rgba(255,185,2,0.7)',
+            borderColor: 'rgba(255,185,2,1)',
+            borderWidth: 1
+          }]
+        },
+        options: {
+          plugins: {
+            legend: { display: false },
+            title: { display: true, text: 'Gráfico de Ocupación', font: { size: 18 } }
+          },
+          scales: {
+            x: { title: { display: true, text: 'Áreas' } },
+            y: { title: { display: true, text: 'Reservas' }, beginAtZero: true }
+          },
+          animation: false,
+          responsive: false,
+        }
+      });
+      setTimeout(() => {
+        const imgData = canvas.toDataURL('image/png');
+        chart.destroy();
+        canvas.remove();
+        resolve(imgData);
+      }, 500); // Espera breve para renderizar
+    });
+  };
+
   const exportToPDF = async () => {
     if (disabled || isExporting) return;
-
     try {
       setIsExporting(true);
       setExportingFormat('PDF');
       onExportStart('PDF');
 
-      // Validar que hay datos para exportar
       if (!data || data.length === 0) {
         throw new Error('No hay datos disponibles para exportar');
       }
 
-      // Simular generación de PDF (en implementación real usaría jsPDF o similar)
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      const doc = new jsPDF();
+      const currentDate = new Date().toLocaleDateString();
+      // Título y metadatos
+      doc.setFontSize(18);
+      doc.text(reportTitle, 14, 18);
+      doc.setFontSize(11);
+      doc.text(`Fecha de generación: ${currentDate}`, 14, 28);
+      doc.text(`Número de registros: ${data.length}`, 14, 36);
+      doc.text('Exportado desde Smart Condominium', 14, 44);
 
-      // Crear contenido PDF simulado
-      const pdfContent = generatePDFContent();
-      const blob = new Blob([pdfContent], { type: 'application/pdf' });
-      
-      // Crear enlace de descarga
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `${fileName}_${new Date().toISOString().split('T')[0]}.pdf`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
+      // Gráfico de barras
+      let y = 54;
+      if (data && data.length > 0) {
+        const imgData = await renderChartToImage();
+        doc.addImage(imgData, 'PNG', 14, y, 180, 80);
+        y += 90;
+      }
 
+      // Tabla de datos
+      const headers = Object.keys(data[0] || {});
+      const tableData = data.map(row => headers.map(h => String(row[h] ?? '')));
+      autoTable(doc, {
+        head: [headers.map(h => h.toUpperCase())],
+        body: tableData,
+        startY: y,
+        styles: { fontSize: 9 },
+        headStyles: { fillColor: [255, 185, 2] },
+        margin: { left: 14, right: 14 },
+      });
+
+      doc.save(`${fileName}_${new Date().toISOString().split('T')[0]}.pdf`);
       onExportComplete('PDF', `${fileName}.pdf`);
-      
     } catch (error) {
       console.error('Error al exportar PDF:', error);
       onExportError('PDF', error.message || 'Error al generar el archivo PDF');
@@ -71,38 +137,42 @@ const ExportButtons = ({
   // Función para exportar a Excel
   const exportToExcel = async () => {
     if (disabled || isExporting) return;
-
     try {
       setIsExporting(true);
       setExportingFormat('Excel');
       onExportStart('Excel');
 
-      // Validar que hay datos para exportar
       if (!data || data.length === 0) {
         throw new Error('No hay datos disponibles para exportar');
       }
 
-      // Simular generación de Excel (en implementación real usaría xlsx o similar)
-      await new Promise(resolve => setTimeout(resolve, 1500));
-
-      // Crear contenido Excel simulado
-      const excelContent = generateExcelContent();
-      const blob = new Blob([excelContent], { 
-        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
+      // Preparar datos para la hoja Excel
+      const currentDate = new Date().toLocaleDateString();
+      const headers = Object.keys(data[0] || {});
+      const tableData = data.map(row => {
+        const obj = {};
+        headers.forEach(h => { obj[h.toUpperCase()] = row[h]; });
+        return obj;
       });
-      
-      // Crear enlace de descarga
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `${fileName}_${new Date().toISOString().split('T')[0]}.xlsx`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
 
+      // Crear hoja y libro
+      const ws = XLSX.utils.json_to_sheet(tableData, { header: headers.map(h => h.toUpperCase()) });
+      // Agregar título y metadatos arriba
+      XLSX.utils.sheet_add_aoa(ws, [[reportTitle]], { origin: 'A1' });
+      XLSX.utils.sheet_add_aoa(ws, [[`Fecha de generación:`, currentDate]], { origin: `A2` });
+      XLSX.utils.sheet_add_aoa(ws, [[`Número de registros:`, data.length]], { origin: `A3` });
+      XLSX.utils.sheet_add_aoa(ws, [[`Exportado desde:`, 'Smart Condominium']], { origin: `A4` });
+      // Mover tabla de datos hacia abajo
+      XLSX.utils.sheet_add_aoa(ws, [headers.map(h => h.toUpperCase())], { origin: `A6` });
+      data.forEach((row, i) => {
+        XLSX.utils.sheet_add_aoa(ws, [headers.map(h => row[h])], { origin: `A${7 + i}` });
+      });
+
+      // Solo exportar la hoja de datos (sin gráfico, por límite de Excel)
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Reporte');
+      XLSX.writeFile(wb, `${fileName}_${new Date().toISOString().split('T')[0]}.xlsx`);
       onExportComplete('Excel', `${fileName}.xlsx`);
-      
     } catch (error) {
       console.error('Error al exportar Excel:', error);
       onExportError('Excel', error.message || 'Error al generar el archivo Excel');
@@ -113,85 +183,7 @@ const ExportButtons = ({
     }
   };
 
-  // Generar contenido PDF simulado
-  const generatePDFContent = () => {
-    const currentDate = new Date().toLocaleDateString();
-    const dataCount = Array.isArray(data) ? data.length : Object.keys(data).length;
-    
-    return `%PDF-1.4
-1 0 obj
-<<
-/Type /Catalog
-/Pages 2 0 R
->>
-endobj
-
-2 0 obj
-<<
-/Type /Pages
-/Kids [3 0 R]
-/Count 1
->>
-endobj
-
-3 0 obj
-<<
-/Type /Page
-/Parent 2 0 R
-/MediaBox [0 0 612 792]
-/Contents 4 0 R
-/Resources <<
-/Font <<
-/F1 5 0 R
->>
->>
->>
-endobj
-
-4 0 obj
-<<
-/Length 200
->>
-stream
-BT
-/F1 12 Tf
-72 720 Td
-(${reportTitle}) Tj
-0 -20 Td
-(Fecha de generación: ${currentDate}) Tj
-0 -20 Td
-(Número de registros: ${dataCount}) Tj
-0 -20 Td
-(Exportado desde Smart Condominium) Tj
-ET
-endstream
-endobj
-
-5 0 obj
-<<
-/Type /Font
-/Subtype /Type1
-/BaseFont /Helvetica
->>
-endobj
-
-xref
-0 6
-0000000000 65535 f 
-0000000010 00000 n 
-0000000053 00000 n 
-0000000110 00000 n 
-0000000271 00000 n 
-0000000524 00000 n 
-trailer
-<<
-/Size 6
-/Root 1 0 R
->>
-startxref
-593
-%%EOF`;
-  };
+  // (Eliminada función generatePDFContent, ahora se usa jsPDF)
 
   // Generar contenido Excel simulado
   const generateExcelContent = () => {
@@ -262,5 +254,4 @@ startxref
     </div>
   );
 };
-
 export default ExportButtons;

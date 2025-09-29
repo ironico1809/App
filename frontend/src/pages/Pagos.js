@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { crearPagoConComprobante } from '../services/api';
 import Sidebar from '../components/Sidebar';
 import Button from '../components/Button';
 import Checkbox from '../components/Checkbox';
@@ -22,6 +23,8 @@ const Pagos = () => {
   const [seleccionados, setSeleccionados] = useState([]);
   const [tab, setTab] = useState('tarjeta');
   const [card, setCard] = useState({ numero: '', titular: '', venc: '', cvv: '' });
+  const [comprobante, setComprobante] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   const total = useMemo(() => seleccionados
     .map(id => cargosMock.find(c => c.id === id))
@@ -38,7 +41,7 @@ const Pagos = () => {
   };
   const clearSel = () => setSeleccionados([]);
 
-  const onPay = () => {
+  const onPay = async () => {
     if (total <= 0) { alert('Selecciona al menos un cargo.'); return; }
     if (tab === 'tarjeta') {
       const digits = card.numero.replace(/\s+/g, '');
@@ -49,7 +52,26 @@ const Pagos = () => {
       alert(`Pago procesado (mock). Monto: Bs ${total.toFixed(2)}`);
       setSeleccionados([]);
     } else if (tab === 'transferencia') {
-      alert('Instrucciones: Transferir a Cta. 123-456-789 Banco X y subir comprobante (mock).');
+      if (!comprobante) { alert('Por favor selecciona un comprobante para subir.'); return; }
+      setLoading(true);
+      try {
+        // Aquí debes obtener el usuario y cuota_servicio reales
+        // Por ahora, se usan valores de ejemplo:
+        const usuario = 1; // Reemplaza con el ID real del usuario
+        const cuota_servicio = 1; // Reemplaza con el ID real de la cuota seleccionada
+        const monto_pagado = total;
+        const res = await crearPagoConComprobante({ usuario, cuota_servicio, monto_pagado, comprobante });
+        if (res && res.id) {
+          alert('Pago registrado y comprobante subido correctamente.');
+          setSeleccionados([]);
+          setComprobante(null);
+        } else {
+          alert('Error al registrar el pago.');
+        }
+      } catch (e) {
+        alert('Error al subir el comprobante.');
+      }
+      setLoading(false);
     } else {
       alert('Mostrando QR de pago (mock).');
     }
@@ -113,7 +135,14 @@ const Pagos = () => {
               <div>Cuenta: 123-456-789</div>
               <div>Titular: SmartCondo SA</div>
               <div>Concepto: Pago expensas C-12</div>
-              <div className="hint">Luego sube el comprobante en la sección correspondiente (mock).</div>
+              <div className="hint">Sube el comprobante de tu transferencia:</div>
+              <input
+                type="file"
+                accept=".jpg,.jpeg,.png,.pdf"
+                onChange={e => setComprobante(e.target.files[0])}
+                disabled={loading}
+              />
+              {comprobante && <div>Archivo seleccionado: {comprobante.name}</div>}
             </div>
           )}
           {tab === 'qr' && (
@@ -123,7 +152,7 @@ const Pagos = () => {
             </div>
           )}
 
-          <Button onClick={onPay} className="pay-btn">Pagar ahora</Button>
+          <Button onClick={onPay} className="pay-btn" disabled={loading}>{loading ? 'Procesando...' : 'Pagar ahora'}</Button>
           <div className="legal-note">* Nunca guardamos datos sensibles de tu tarjeta en nuestros servidores.</div>
         </section>
       </div>

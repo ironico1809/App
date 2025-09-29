@@ -1,164 +1,20 @@
+
 import React, { useState, useEffect } from 'react';
 import DashboardLayout from '../components/DashboardLayout';
 import Input from '../components/Input';
 import Button from '../components/Button';
 import Modal from '../components/Modal';
 import './SeguimientoMantenimiento.css';
+import { obtenerPlanesMantenimiento, obtenerOrdenesMantenimiento, obtenerEvidenciasMantenimiento } from '../services/api';
 
-// Datos simulados basados en la BD real - tabla tarea_mantenimiento con tipo PREVENTIVO
-const planesPreventivos = [
-  {
-    id_plan: 1,
-    nombre: 'Mantenimiento HVAC Mensual',
-    descripcion: 'Revisión mensual del sistema de climatización',
-    frecuencia: 'MENSUAL',
-    activos: ['Sistema de Climatización Central'],
-    proxima_ejecucion: '2024-02-15',
-    activo: true
-  },
-  {
-    id_plan: 2,
-    nombre: 'Inspección de Ascensores',
-    descripcion: 'Revisión trimestral de seguridad de ascensores',
-    frecuencia: 'TRIMESTRAL',
-    activos: ['Ascensor Torre A', 'Ascensor Torre B'],
-    proxima_ejecucion: '2024-02-20',
-    activo: true
-  },
-  {
-    id_plan: 3,
-    nombre: 'Mantenimiento Bombas de Agua',
-    descripcion: 'Revisión semestral de bombas y sistema hidráulico',
-    frecuencia: 'SEMESTRAL',
-    activos: ['Bomba de Agua Principal', 'Bomba Secundaria'],
-    proxima_ejecucion: '2024-03-01',
-    activo: true
-  }
-];
-
-// Órdenes de mantenimiento preventivo - tabla tarea_mantenimiento
-const ordenesPreventivas = [
-  {
-    id_orden: 1,
-    id_plan: 1,
-    plan_nombre: 'Mantenimiento HVAC Mensual',
-    titulo: 'Mantenimiento HVAC - Febrero 2024',
-    descripcion: 'Limpieza de filtros, revisión de refrigerante, verificación de termostatos',
-    activo: 'Sistema de Climatización Central',
-    fecha_programada: '2024-02-15',
-    fecha_limite: '2024-02-17',
-    estado: 'PROGRAMADA',
-    prioridad: 'MEDIA',
-    id_responsable: 12,
-    responsable_nombre: 'Roberto Silva',
-    fecha_inicio: null,
-    fecha_completado: null,
-    tiempo_estimado: 240, // minutos
-    tiempo_real: null,
-    costo_estimado: 150.00,
-    costo_real: null,
-    observaciones: null
-  },
-  {
-    id_orden: 2,
-    id_plan: 2,
-    plan_nombre: 'Inspección de Ascensores',
-    titulo: 'Inspección Ascensor Torre A - Q1 2024',
-    descripcion: 'Revisión de cables, frenos, sistemas de seguridad y certificación',
-    activo: 'Ascensor Torre A',
-    fecha_programada: '2024-02-10',
-    fecha_limite: '2024-02-12',
-    estado: 'EN_EJECUCION',
-    prioridad: 'ALTA',
-    id_responsable: 10,
-    responsable_nombre: 'Carlos Méndez',
-    fecha_inicio: '2024-02-10T08:00:00',
-    fecha_completado: null,
-    tiempo_estimado: 180,
-    tiempo_real: 120, // parcial
-    costo_estimado: 200.00,
-    costo_real: null,
-    observaciones: 'Cable principal necesita reemplazo en próxima inspección'
-  },
-  {
-    id_orden: 3,
-    id_plan: 1,
-    plan_nombre: 'Mantenimiento HVAC Mensual',
-    titulo: 'Mantenimiento HVAC - Enero 2024',
-    descripcion: 'Limpieza de filtros, revisión de refrigerante, verificación de termostatos',
-    activo: 'Sistema de Climatización Central',
-    fecha_programada: '2024-01-15',
-    fecha_limite: '2024-01-17',
-    estado: 'COMPLETADA',
-    prioridad: 'MEDIA',
-    id_responsable: 12,
-    responsable_nombre: 'Roberto Silva',
-    fecha_inicio: '2024-01-15T09:00:00',
-    fecha_completado: '2024-01-15T13:30:00',
-    tiempo_estimado: 240,
-    tiempo_real: 270,
-    costo_estimado: 150.00,
-    costo_real: 165.00,
-    observaciones: 'Filtros más sucios de lo esperado. Se recomienda aumentar frecuencia.'
-  },
-  {
-    id_orden: 4,
-    id_plan: 3,
-    plan_nombre: 'Mantenimiento Bombas de Agua',
-    titulo: 'Mantenimiento Bomba Principal - S2 2023',
-    descripcion: 'Cambio de sellos, revisión de motores, pruebas de presión',
-    activo: 'Bomba de Agua Principal',
-    fecha_programada: '2024-01-20',
-    fecha_limite: '2024-01-25',
-    estado: 'REPROGRAMADA',
-    prioridad: 'ALTA',
-    id_responsable: 11,
-    responsable_nombre: 'Ana Torres',
-    fecha_inicio: null,
-    fecha_completado: null,
-    tiempo_estimado: 360,
-    tiempo_real: null,
-    costo_estimado: 300.00,
-    costo_real: null,
-    observaciones: 'Reprogramada por falta de repuestos (sellos específicos)'
-  }
-];
-
-// Evidencias de mantenimiento - tabla evidencia_mantenimiento
-const evidenciasMock = [
-  {
-    id_evidencia: 1,
-    id_orden: 3,
-    tipo: 'FOTO',
-    descripcion: 'Estado de filtros antes de limpieza',
-    archivo: 'filtros_antes_ene24.jpg',
-    fecha_subida: '2024-01-15T09:15:00'
-  },
-  {
-    id_evidencia: 2,
-    id_orden: 3,
-    tipo: 'FOTO',
-    descripcion: 'Filtros después de limpieza',
-    archivo: 'filtros_despues_ene24.jpg',
-    fecha_subida: '2024-01-15T13:00:00'
-  },
-  {
-    id_evidencia: 3,
-    id_orden: 2,
-    tipo: 'DOCUMENTO',
-    descripcion: 'Check-list de inspección de seguridad',
-    archivo: 'checklist_ascensor_feb24.pdf',
-    fecha_subida: '2024-02-10T10:30:00'
-  }
-];
-
+// Constantes para selects y filtros
 const estados = ['TODAS', 'PROGRAMADA', 'EN_EJECUCION', 'COMPLETADA', 'REPROGRAMADA', 'CANCELADA'];
 const frecuencias = ['SEMANAL', 'QUINCENAL', 'MENSUAL', 'BIMESTRAL', 'TRIMESTRAL', 'SEMESTRAL', 'ANUAL'];
 
 const SeguimientoMantenimiento = () => {
-  const [ordenes, setOrdenes] = useState(ordenesPreventivas);
-  const [planes, setPlanes] = useState(planesPreventivos);
-  const [evidencias, setEvidencias] = useState(evidenciasMock);
+  const [ordenes, setOrdenes] = useState([]);
+  const [planes, setPlanes] = useState([]);
+  const [evidencias, setEvidencias] = useState([]);
   const [vistaActual, setVistaActual] = useState('ordenes'); // 'ordenes' o 'planes'
   const [filtroEstado, setFiltroEstado] = useState('TODAS');
   const [filtroPlan, setFiltroPlan] = useState('TODOS');
@@ -196,6 +52,27 @@ const SeguimientoMantenimiento = () => {
     tiempo_estimado: '',
     costo_estimado: ''
   });
+
+  // Cargar datos reales al montar
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        const [ordenesData, planesData, evidenciasData] = await Promise.all([
+          obtenerOrdenesMantenimiento(),
+          obtenerPlanesMantenimiento(),
+          obtenerEvidenciasMantenimiento()
+        ]);
+        setOrdenes(ordenesData);
+        setPlanes(planesData);
+        setEvidencias(evidenciasData);
+      } catch (e) {
+        setOrdenes([]);
+        setPlanes([]);
+        setEvidencias([]);
+      }
+    }
+    fetchData();
+  }, []);
 
   const limpiarFiltros = () => {
     setFiltroEstado('TODAS');
@@ -280,8 +157,26 @@ const SeguimientoMantenimiento = () => {
   };
 
   const guardarComplecion = () => {
+    // Validaciones
+    if (!formCompletar.tiempo_real || isNaN(formCompletar.tiempo_real) || Number(formCompletar.tiempo_real) <= 0) {
+      alert('Por favor ingresa un tiempo real válido (> 0)');
+      return;
+    }
+    if (!formCompletar.costo_real || isNaN(formCompletar.costo_real) || Number(formCompletar.costo_real) < 0) {
+      alert('Por favor ingresa un costo real válido (>= 0)');
+      return;
+    }
+    if (formCompletar.observaciones.trim().length < 5) {
+      alert('Por favor ingresa observaciones (mínimo 5 caracteres)');
+      return;
+    }
+    if (formCompletar.requiere_reprogramacion && (!formCompletar.proxima_fecha || isNaN(Date.parse(formCompletar.proxima_fecha)))) {
+      alert('Debes ingresar una fecha válida para la reprogramación');
+      return;
+    }
+
     const ahora = new Date().toISOString();
-    
+
     setOrdenes(prev => prev.map(o => 
       o.id_orden === ordenSeleccionada.id_orden 
         ? {
@@ -413,6 +308,14 @@ const SeguimientoMantenimiento = () => {
       case 'URGENTE': return 'prioridad-urgente';
       default: return 'prioridad-media';
     }
+  };
+
+  // Handler para cerrar el modal y limpiar estados relacionados
+  const handleCloseModal = () => {
+    setModalOpen(false);
+    setOrdenSeleccionada(null);
+    setModalTipo('');
+    setPlanSeleccionado(null);
   };
 
   return (
@@ -567,7 +470,7 @@ const SeguimientoMantenimiento = () => {
                           </div>
                         </td>
                         <td className="plan-nombre">{orden.plan_nombre}</td>
-                        <td className="activo-nombre">{orden.activo}</td>
+                        <td className="activo-nombre">{orden.activo_nombre || orden.activo || 'No especificado'}</td>
                         <td>
                           <span className={`badge-estado ${getEstadoClass(orden.estado)}`}>
                             {orden.estado}
@@ -663,8 +566,11 @@ const SeguimientoMantenimiento = () => {
                     <div className="plan-activos">
                       <strong>Activos:</strong>
                       <ul>
-                        {plan.activos.map((activo, idx) => (
-                          <li key={idx}>{activo}</li>
+                        {(plan.activos_nombres && plan.activos_nombres.length > 0
+                          ? plan.activos_nombres
+                          : plan.activos
+                        ).map((nombre, idx) => (
+                          <li key={idx}>{typeof nombre === 'string' ? nombre : (nombre && nombre.nombre ? nombre.nombre : String(nombre))}</li>
                         ))}
                       </ul>
                     </div>
@@ -697,37 +603,35 @@ const SeguimientoMantenimiento = () => {
         )}
 
         {/* Modales */}
-        <Modal 
-          isOpen={modalOpen} 
-          onClose={() => setModalOpen(false)}
-          title={
-            modalTipo === 'ejecutar' ? 'Iniciar Ejecución' :
-            modalTipo === 'completar' ? 'Completar Orden' :
-            modalTipo === 'evidencia' ? 'Gestionar Evidencias' :
-            modalTipo === 'plan' ? 'Nuevo Plan Preventivo' : ''
-          }
-        >
-          {/* Modal Iniciar Ejecución */}
-          {modalTipo === 'ejecutar' && ordenSeleccionada && (
-            <div className="modal-form">
-              <div className="orden-info-modal">
-                <h3>{ordenSeleccionada.titulo}</h3>
-                <p><strong>Activo:</strong> {ordenSeleccionada.activo}</p>
-                <p><strong>Tiempo estimado:</strong> {ordenSeleccionada.tiempo_estimado} minutos</p>
-              </div>
-
-              <div className="form-group">
-                <label>Observaciones iniciales</label>
-                <textarea
-                  placeholder="Condiciones iniciales, herramientas necesarias..."
-                  value={formEjecucion.observaciones_inicio}
-                  onChange={(e) => setFormEjecucion({...formEjecucion, observaciones_inicio: e.target.value})}
-                  className="form-textarea"
-                  rows="3"
-                />
-              </div>
-
-              <div className="modal-actions">
+        {modalOpen && (
+          <Modal 
+            onClose={handleCloseModal}
+            title={
+              modalTipo === 'ejecutar' ? 'Iniciar Ejecución' :
+              modalTipo === 'completar' ? 'Completar Orden' :
+              modalTipo === 'evidencia' ? 'Gestionar Evidencias' :
+              modalTipo === 'plan' ? 'Nuevo Plan Preventivo' : ''
+            }
+          >
+            {/* Modal Iniciar Ejecución */}
+            {modalTipo === 'ejecutar' && ordenSeleccionada && (
+              <div className="modal-form">
+                <div className="orden-info-modal">
+                  <h3>{ordenSeleccionada.titulo}</h3>
+                  <p><strong>Activo:</strong> {ordenSeleccionada.activo}</p>
+                  <p><strong>Tiempo estimado:</strong> {ordenSeleccionada.tiempo_estimado} minutos</p>
+                </div>
+                <div className="form-group">
+                  <label>Observaciones iniciales</label>
+                  <textarea
+                    placeholder="Condiciones iniciales, herramientas necesarias..."
+                    value={formEjecucion.observaciones_inicio}
+                    onChange={(e) => setFormEjecucion({...formEjecucion, observaciones_inicio: e.target.value})}
+                    className="form-textarea"
+                    rows="3"
+                  />
+                </div>
+                <div className="modal-actions">
                 <Button onClick={() => setModalOpen(false)} className="btn-secondary">
                   Cancelar
                 </Button>
@@ -950,9 +854,10 @@ const SeguimientoMantenimiento = () => {
             </div>
           )}
         </Modal>
+      )}
       </div>
     </DashboardLayout>
   );
-};
+}
 
 export default SeguimientoMantenimiento;

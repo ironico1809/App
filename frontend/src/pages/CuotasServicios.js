@@ -1,4 +1,5 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
+import { obtenerCuotasGeneradas } from '../services/api';
 import Sidebar from '../components/Sidebar';
 import Input from '../components/Input';
 import Button from '../components/Button';
@@ -7,13 +8,17 @@ import ExportButtons from '../components/ExportButtons';
 import './CuotasServicios.css';
 import DashboardLayout from '../components/DashboardLayout';
 
-const dataMock = [
-  { id: 1, unidad: 'C-12', tipo: 'EXPENSA', concepto: 'Expensa Septiembre', periodo: '2025-09', vencimiento: '2025-09-10', monto: 350.00, estado: 'Pendiente' },
-  { id: 2, unidad: 'C-12', tipo: 'SERVICIO', concepto: 'Agua Agosto', periodo: '2025-08', vencimiento: '2025-08-20', monto: 42.50, estado: 'Pagado' },
-  { id: 3, unidad: 'C-12', tipo: 'SERVICIO', concepto: 'Luz Agosto', periodo: '2025-08', vencimiento: '2025-08-18', monto: 68.20, estado: 'Pagado' },
-  { id: 4, unidad: 'C-12', tipo: 'MULTA', concepto: 'Ruido nocturno', periodo: '2025-07', vencimiento: '2025-07-31', monto: 100.00, estado: 'Vencido' },
-  { id: 5, unidad: 'C-12', tipo: 'EXPENSA', concepto: 'Expensa Agosto', periodo: '2025-08', vencimiento: '2025-08-10', monto: 350.00, estado: 'Pagado' },
-];
+
+const mapCuota = (c) => ({
+  id: c.id,
+  unidad: c.unidad?.nombre || '',
+  tipo: c.cuota_servicio?.tipo || '',
+  concepto: c.cuota_servicio?.nombre || '',
+  periodo: c.periodo,
+  vencimiento: c.vencimiento,
+  monto: Number(c.monto),
+  estado: c.estado
+});
 
 const tipos = ['Todos', 'EXPENSA', 'SERVICIO', 'MULTA'];
 const estados = ['Todos', 'Pendiente', 'Pagado', 'Vencido'];
@@ -23,15 +28,26 @@ const estadoBadge = (estado) => {
   return <Badge variant={variant} label={estado} />;
 };
 
+
 const CuotasServicios = () => {
   const [q, setQ] = useState('');
   const [tipo, setTipo] = useState('Todos');
   const [estado, setEstado] = useState('Todos');
   const [desde, setDesde] = useState('');
   const [hasta, setHasta] = useState('');
+  const [cuotas, setCuotas] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    setLoading(true);
+    obtenerCuotasGeneradas().then(data => {
+      setCuotas(Array.isArray(data) ? data.map(mapCuota) : []);
+      setLoading(false);
+    });
+  }, []);
 
   const filtrados = useMemo(() => {
-    return dataMock.filter(r => {
+    return cuotas.filter(r => {
       const byQuery = q === '' || `${r.concepto} ${r.tipo}`.toLowerCase().includes(q.toLowerCase());
       const byTipo = tipo === 'Todos' || r.tipo === tipo;
       const byEstado = estado === 'Todos' || r.estado === estado;
@@ -40,7 +56,7 @@ const CuotasServicios = () => {
       const okHasta = !hasta || vto <= new Date(hasta).getTime();
       return byQuery && byTipo && byEstado && okDesde && okHasta;
     });
-  }, [q, tipo, estado, desde, hasta]);
+  }, [q, tipo, estado, desde, hasta, cuotas]);
 
   const totalPendiente = useMemo(() => filtrados
     .filter(r => r.estado !== 'Pagado')

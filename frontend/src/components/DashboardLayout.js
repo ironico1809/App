@@ -13,8 +13,6 @@ const DashboardHeaderBar = ({ sidebarCollapsed }) => (
       <span className="dashboard-logo-title">Smart Condominium</span>
     </div>
     <div className="dashboard-user-info">
-      <span className="dashboard-bell">🔔<span className="dashboard-dot"></span></span>
-      <span className="dashboard-user-avatar">JP</span>
       <div className="dashboard-user-details">
         <div className="dashboard-user-name">Juan Pérez</div>
         <div className="dashboard-user-role">Administrador</div>

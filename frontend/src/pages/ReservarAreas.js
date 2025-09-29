@@ -2,55 +2,23 @@ import React, { useState, useEffect } from 'react';
 import DashboardLayout from '../components/DashboardLayout';
 import Input from '../components/Input';
 import Button from '../components/Button';
+import { crearReservaArea } from '../services/api';
+import { obtenerAreasComunes } from '../services/areas';
 import './ReservarAreas.css';
 
-const areasComunes = [
-  {
-    id: 1,
-    nombre: 'Salón de Eventos',
-    descripcion: 'Espacio amplio ideal para celebraciones y reuniones',
-    aforoMaximo: 50,
-    tarifa: 150.00,
-    reglas: 'No se permite música después de las 22:00. Limpieza incluida.',
-    imagen: '/images/salon-eventos.jpg'
-  },
-  {
-    id: 2,
-    nombre: 'Cancha de Tenis',
-    descripcion: 'Cancha profesional con iluminación nocturna',
-    aforoMaximo: 4,
-    tarifa: 25.00,
-    reglas: 'Máximo 2 horas por reserva. Traer raquetas propias.',
-    imagen: '/images/cancha-tenis.jpg'
-  },
-  {
-    id: 3,
-    nombre: 'Piscina',
-    descripción: 'Piscina climatizada con área de recreación',
-    aforoMaximo: 15,
-    tarifa: 35.00,
-    reglas: 'Horario: 6:00 AM - 10:00 PM. Niños deben estar acompañados.',
-    imagen: '/images/piscina.jpg'
-  },
-  {
-    id: 4,
-    nombre: 'Gimnasio',
-    descripción: 'Equipado con máquinas modernas y pesas',
-    aforoMaximo: 8,
-    tarifa: 15.00,
-    reglas: 'Uso de toalla obligatorio. Máximo 1.5 horas.',
-    imagen: '/images/gimnasio.jpg'
-  },
-  {
-    id: 5,
-    nombre: 'Sala de Juegos',
-    descripción: 'Mesa de billar, ping pong y juegos de mesa',
-    aforoMaximo: 12,
-    tarifa: 20.00,
-    reglas: 'Prohibido el consumo de bebidas alcohólicas.',
-    imagen: '/images/sala-juegos.jpg'
-  }
-];
+
+// Hook para cargar áreas desde el backend
+const useAreasComunes = () => {
+  const [areas, setAreas] = useState([]);
+  const [loadingAreas, setLoadingAreas] = useState(true);
+  useEffect(() => {
+    obtenerAreasComunes().then(data => {
+      setAreas(data);
+      setLoadingAreas(false);
+    });
+  }, []);
+  return { areas, loadingAreas };
+};
 
 const horariosDisponibles = [
   '06:00', '07:00', '08:00', '09:00', '10:00', '11:00',
@@ -59,6 +27,7 @@ const horariosDisponibles = [
 ];
 
 const ReservarAreas = () => {
+  const { areas, loadingAreas } = useAreasComunes();
   const [selectedArea, setSelectedArea] = useState(null);
   const [formData, setFormData] = useState({
     fecha: '',
@@ -66,7 +35,8 @@ const ReservarAreas = () => {
     horaFin: '',
     cantidadPersonas: 1,
     detalles: '',
-    aceptaTerminos: false
+    aceptaTerminos: false,
+    comprobante_pago: null
   });
   const [disponibilidad, setDisponibilidad] = useState({});
   const [loading, setLoading] = useState(false);
@@ -83,28 +53,98 @@ const ReservarAreas = () => {
   const [paymentStep, setPaymentStep] = useState('form'); // form, processing, success, error
 
   useEffect(() => {
-    // Simular carga de disponibilidad
     if (selectedArea && formData.fecha) {
       loadDisponibilidad();
     }
   }, [selectedArea, formData.fecha]);
 
+  // Cargar horarios y disponibilidad reales del backend
   const loadDisponibilidad = async () => {
     setLoading(true);
-    try {
-      // Simular llamada a API
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Simular algunas horas ocupadas
-      const ocupadas = ['10:00', '14:00', '18:00'];
+  try {
+      // --- DEBUG LOGS ---
+      console.log('Solicitando horarios y disponibilidad para:', selectedArea, formData.fecha);
+      const horariosResp = await import('../services/areas');
+      const { obtenerHorariosArea, verificarDisponibilidad } = horariosResp;
+      const horariosData = await obtenerHorariosArea(selectedArea.id);
+      console.log('Respuesta de obtenerHorariosArea:', horariosData);
+      let disponibilidadData;
+      try {
+        disponibilidadData = await verificarDisponibilidad(selectedArea.id, formData.fecha);
+      } catch (apiError) {
+        // Mostrar el error real del backend si existe
+        if (apiError instanceof Error && apiError.message) {
+          alert('Error al verificar disponibilidad: ' + apiError.message);
+        } else {
+          alert('Error desconocido al verificar disponibilidad.');
+        }
+        throw apiError;
+      }
+      console.log('Respuesta de verificarDisponibilidad:', disponibilidadData);
+
+      // Obtener el día de la semana en formato backend (lunes, martes, ...)
+      const diasMap = {
+        'monday': 'lunes',
+        'tuesday': 'martes',
+        'wednesday': 'miercoles',
+        'thursday': 'jueves',
+        'friday': 'viernes',
+        'saturday': 'sabado',
+        'sunday': 'domingo',
+      };
+      const jsDay = new Date(formData.fecha + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
+      const diaSemana = diasMap[jsDay];
+      console.log('Día de la semana (frontend -> backend):', jsDay, '->', diaSemana);
+      const horarioDia = horariosData.horarios[diaSemana];
+      console.log('Horario para el día seleccionado:', horarioDia);
+      // Si no hay horario para el día, o está inactivo, o apertura/cierre es nulo/vacío, marcar como inactivo
+      const apertura = horarioDia && horarioDia.activo && horarioDia.apertura ? horarioDia.apertura : null;
+      const cierre = horarioDia && horarioDia.activo && horarioDia.cierre ? horarioDia.cierre : null;
       const disponible = {};
-      horariosDisponibles.forEach(hora => {
-        disponible[hora] = !ocupadas.includes(hora);
-      });
-      
+
+      // Función para comparar horas tipo "HH:MM"
+      const horaToMinutes = (h) => {
+        if (!h || typeof h !== 'string' || !h.includes(':')) return null;
+        const [hh, mm] = h.split(':');
+        return parseInt(hh, 10) * 60 + parseInt(mm, 10);
+      };
+
+      if (apertura && cierre && horarioDia.activo) {
+        const aperturaMin = horaToMinutes(apertura);
+        const cierreMin = horaToMinutes(cierre);
+        horariosDisponibles.forEach(hora => {
+          const horaMin = horaToMinutes(hora);
+          if (horaMin === null) {
+            disponible[hora] = false;
+            return;
+          }
+          // Solo marcar como disponible si está dentro del rango de apertura/cierre
+          if (horaMin >= aperturaMin && horaMin < cierreMin) {
+            // Verificar si la hora está ocupada
+            const ocupada = disponibilidadData.ocupadas.some(o => {
+              const ini = horaToMinutes(o.inicio);
+              const fin = horaToMinutes(o.fin);
+              return horaMin >= ini && horaMin < fin;
+            });
+            disponible[hora] = !ocupada;
+          } else {
+            disponible[hora] = false;
+          }
+        });
+      } else {
+        // Día inactivo o sin horario válido: todas las horas no disponibles
+        horariosDisponibles.forEach(hora => {
+          disponible[hora] = false;
+        });
+      }
       setDisponibilidad(disponible);
     } catch (error) {
       console.error('Error cargando disponibilidad:', error);
+      const disponible = {};
+      horariosDisponibles.forEach(hora => {
+        disponible[hora] = false;
+      });
+      setDisponibilidad(disponible);
     } finally {
       setLoading(false);
     }
@@ -194,43 +234,35 @@ const ReservarAreas = () => {
 
   const processPayment = async () => {
     if (!validatePayment()) return;
-    
     setPaymentStep('processing');
     setLoading(true);
-    
     try {
-      const paymentRequest = {
-        monto: calcularMontoTotal(),
-        metodoPago: paymentData.metodoPago,
-        datosFacturacion: {
-          nombreTitular: paymentData.nombreTitular,
-          numeroDocumento: paymentData.numeroDocumento,
-          tipoDocumento: paymentData.tipoDocumento
-        },
-        reserva: {
-          areaId: selectedArea.id,
-          fecha: formData.fecha,
-          horaInicio: formData.horaInicio,
-          horaFin: formData.horaFin,
-          cantidadPersonas: formData.cantidadPersonas,
-          detalles: formData.detalles
-        }
-      };
-      
-      console.log('Procesando pago:', paymentRequest);
-      
       // Simular procesamiento de pago
       await new Promise(resolve => setTimeout(resolve, 3000));
-      
       // Simular posible fallo (20% de probabilidad)
       if (Math.random() < 0.2) {
         throw new Error('Pago rechazado por el banco');
       }
-      
+
+      // Guardar reserva en la base de datos
+      const usuario = 1; // Cambia esto por el id real del usuario logueado
+      const formReserva = new FormData();
+      formReserva.append('usuario', usuario);
+      formReserva.append('area', selectedArea.id);
+      formReserva.append('fecha', formData.fecha);
+      formReserva.append('hora_inicio', formData.horaInicio);
+      formReserva.append('hora_fin', formData.horaFin);
+      formReserva.append('cantidad_personas', formData.cantidadPersonas);
+      formReserva.append('detalles', formData.detalles);
+      formReserva.append('monto', calcularMontoTotal());
+      if (formData.comprobante_pago) {
+        formReserva.append('comprobante_pago', formData.comprobante_pago);
+      }
+      await crearReservaArea(formReserva, true);
+
       setPaymentStep('success');
-      
     } catch (error) {
-      console.error('Error procesando pago:', error);
+      console.error('Error procesando pago o guardando reserva:', error);
       setPaymentStep('error');
     } finally {
       setLoading(false);
@@ -262,27 +294,23 @@ const ReservarAreas = () => {
 
   const handleSubmit = async () => {
     if (!validateStep3()) return;
-    
     setLoading(true);
     try {
-      const reservaData = {
-        areaId: selectedArea.id,
-        fecha: formData.fecha,
-        horaInicio: formData.horaInicio,
-        horaFin: formData.horaFin,
-        cantidadPersonas: formData.cantidadPersonas,
-        detalles: formData.detalles,
-        monto: calcularMonto()
-      };
-      
-      console.log('Creando reserva:', reservaData);
-      
-      // Simular envío
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      alert('¡Reserva creada exitosamente! Se ha enviado una confirmación por email.');
-      
-      // Reset form
+      const usuario = 1; // Cambia esto por el id real del usuario logueado
+      const formReserva = new FormData();
+      formReserva.append('usuario', usuario);
+      formReserva.append('area', selectedArea.id);
+      formReserva.append('fecha', formData.fecha);
+      formReserva.append('hora_inicio', formData.horaInicio);
+      formReserva.append('hora_fin', formData.horaFin);
+      formReserva.append('cantidad_personas', formData.cantidadPersonas);
+      formReserva.append('detalles', formData.detalles);
+      formReserva.append('monto', calcularMonto());
+      if (formData.comprobante_pago) {
+        formReserva.append('comprobante_pago', formData.comprobante_pago);
+      }
+      const reserva = await crearReservaArea(formReserva, true);
+      alert('¡Reserva creada exitosamente! Se ha guardado en la base, pe.');
       setSelectedArea(null);
       setFormData({
         fecha: '',
@@ -290,13 +318,13 @@ const ReservarAreas = () => {
         horaFin: '',
         cantidadPersonas: 1,
         detalles: '',
-        aceptaTerminos: false
+        aceptaTerminos: false,
+        comprobante_pago: null
       });
       setStep(1);
-      
     } catch (error) {
       console.error('Error creando reserva:', error);
-      alert('Error al crear la reserva. Intente nuevamente.');
+      alert('Error al crear la reserva. Intenta nuevamente, causa.');
     } finally {
       setLoading(false);
     }
@@ -378,37 +406,41 @@ const ReservarAreas = () => {
           {step === 1 && (
             <div className="step-content">
               <h2>Seleccione el área a reservar</h2>
-              <div className="areas-grid">
-                {areasComunes.map(area => (
-                  <div 
-                    key={area.id} 
-                    className="area-card"
-                    onClick={() => handleAreaSelect(area)}
-                  >
-                    <div className="area-image">
-                      <svg width="60" height="60" viewBox="0 0 24 24" fill="none">
-                        <path d="M3 9L12 2L21 9V20C21 20.5304 20.7893 21.0391 20.4142 21.4142C20.0391 21.7893 19.5304 22 19 22H5C4.46957 22 3.96086 21.7893 3.58579 21.4142C3.21071 21.0391 3 20.5304 3 20V9Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                      </svg>
-                    </div>
-                    <div className="area-info">
-                      <h3>{area.nombre}</h3>
-                      <p className="area-description">{area.descripcion}</p>
-                      <div className="area-details">
-                        <span className="area-capacity">
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                            <path d="M20 21V19C20 17.9391 19.5786 16.9217 18.8284 16.1716C18.0783 15.4214 17.0609 15 16 15H8C6.93913 15 5.92172 15.4214 5.17157 16.1716C4.42143 16.9217 4 17.9391 4 19V21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                            <circle cx="12" cy="7" r="4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                          </svg>
-                          {area.aforoMaximo} personas max
-                        </span>
-                        <span className="area-price">
-                          ${area.tarifa}/hora
-                        </span>
+              {loadingAreas ? (
+                <div>Cargando áreas...</div>
+              ) : (
+                <div className="areas-grid">
+                  {areas.map(area => (
+                    <div 
+                      key={area.id} 
+                      className="area-card"
+                      onClick={() => handleAreaSelect(area)}
+                    >
+                      <div className="area-image">
+                        <svg width="60" height="60" viewBox="0 0 24 24" fill="none">
+                          <path d="M3 9L12 2L21 9V20C21 20.5304 20.7893 21.0391 20.4142 21.4142C20.0391 21.7893 19.5304 22 19 22H5C4.46957 22 3.96086 21.7893 3.58579 21.4142C3.21071 21.0391 3 20.5304 3 20V9Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      </div>
+                      <div className="area-info">
+                        <h3>{area.nombre}</h3>
+                        <p className="area-description">{area.descripcion}</p>
+                        <div className="area-details">
+                          <span className="area-capacity">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                              <path d="M20 21V19C20 17.9391 19.5786 16.9217 18.8284 16.1716C18.0783 15.4214 17.0609 15 16 15H8C6.93913 15 5.92172 15.4214 5.17157 16.1716C4.42143 16.9217 4 17.9391 4 19V21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                              <circle cx="12" cy="7" r="4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                            </svg>
+                            {area.aforo_maximo} personas max
+                          </span>
+                          <span className="area-price">
+                            ${area.precio_hora}/hora
+                          </span>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 
@@ -416,83 +448,73 @@ const ReservarAreas = () => {
           {step === 2 && selectedArea && (
             <div className="step-content">
               <h2>Seleccione fecha y horario</h2>
-              
               <div className="selected-area-info">
                 <h3>{selectedArea.nombre}</h3>
                 <p>{selectedArea.descripcion}</p>
               </div>
-
               <div className="datetime-form">
                 <div className="form-group">
                   <label className="form-label">Fecha de reserva</label>
                   <Input
                     type="date"
                     value={formData.fecha}
-                    onChange={(e) => handleInputChange('fecha', e.target.value)}
-                    min={new Date().toISOString().split('T')[0]}
+                    onChange={e => handleInputChange('fecha', e.target.value)}
+                    className="form-input"
                   />
                 </div>
-
-                {formData.fecha && (
-                  <>
-                    <div className="form-group">
-                      <label className="form-label">Hora de inicio</label>
-                      <select
-                        value={formData.horaInicio}
-                        onChange={(e) => handleInputChange('horaInicio', e.target.value)}
-                        className="form-select"
+                <div className="form-group">
+                  <label className="form-label">Hora de inicio</label>
+                  <select
+                    value={formData.horaInicio}
+                    onChange={e => handleInputChange('horaInicio', e.target.value)}
+                    className="form-select"
+                  >
+                    <option value="">Seleccionar hora</option>
+                    {horariosDisponibles.map(hora => (
+                      <option 
+                        key={hora} 
+                        value={hora}
+                        disabled={disponibilidad[hora] === false}
                       >
-                        <option value="">Seleccionar hora</option>
-                        {horariosDisponibles.map(hora => (
-                          <option 
-                            key={hora} 
-                            value={hora}
-                            disabled={disponibilidad[hora] === false}
-                          >
-                            {hora} {disponibilidad[hora] === false ? '(Ocupado)' : ''}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div className="form-group">
-                      <label className="form-label">Hora de fin</label>
-                      <select
-                        value={formData.horaFin}
-                        onChange={(e) => handleInputChange('horaFin', e.target.value)}
-                        className="form-select"
-                        disabled={!formData.horaInicio}
-                      >
-                        <option value="">Seleccionar hora</option>
-                        {horariosDisponibles
-                          .filter(hora => hora > formData.horaInicio)
-                          .map(hora => (
-                          <option 
-                            key={hora} 
-                            value={hora}
-                            disabled={disponibilidad[hora] === false}
-                          >
-                            {hora} {disponibilidad[hora] === false ? '(Ocupado)' : ''}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-
-                    {loading && (
-                      <div className="loading-availability">
-                        <svg className="spinner" width="24" height="24" viewBox="0 0 24 24">
-                          <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeDasharray="31.416" strokeDashoffset="31.416">
-                            <animate attributeName="stroke-dasharray" dur="2s" values="0 31.416;15.708 15.708;0 31.416" repeatCount="indefinite"/>
-                            <animate attributeName="stroke-dashoffset" dur="2s" values="0;-15.708;-31.416" repeatCount="indefinite"/>
-                          </circle>
-                        </svg>
-                        Verificando disponibilidad...
-                      </div>
-                    )}
-                  </>
+                        {hora} {disponibilidad[hora] === false ? '(Ocupado)' : ''}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Hora de fin</label>
+                  <select
+                    value={formData.horaFin}
+                    onChange={e => handleInputChange('horaFin', e.target.value)}
+                    className="form-select"
+                    disabled={!formData.horaInicio}
+                  >
+                    <option value="">Seleccionar hora</option>
+                    {horariosDisponibles
+                      .filter(hora => hora > formData.horaInicio)
+                      .map(hora => (
+                        <option 
+                          key={hora} 
+                          value={hora}
+                          disabled={disponibilidad[hora] === false}
+                        >
+                          {hora} {disponibilidad[hora] === false ? '(Ocupado)' : ''}
+                        </option>
+                    ))}
+                  </select>
+                </div>
+                {loading && (
+                  <div className="loading-availability">
+                    <svg className="spinner" width="24" height="24" viewBox="0 0 24 24">
+                      <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeDasharray="31.416" strokeDashoffset="31.416">
+                        <animate attributeName="stroke-dasharray" dur="2s" values="0 31.416;15.708 15.708;0 31.416" repeatCount="indefinite"/>
+                        <animate attributeName="stroke-dashoffset" dur="2s" values="0;-15.708;-31.416" repeatCount="indefinite"/>
+                      </circle>
+                    </svg>
+                    Verificando disponibilidad...
+                  </div>
                 )}
               </div>
-
               <div className="step-actions">
                 <Button variant="outline" onClick={goBack}>
                   Atrás

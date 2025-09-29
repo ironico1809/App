@@ -7,37 +7,39 @@
 }
 
 /* Sidebar container */
-.sidebar {
-  position: fixed; /* Fixed para estar siempre visible */
-  top: 0;
+
+  .sidebar {
+  position: fixed;
+  top: 60px;
   left: 0;
   height: 100vh;
   width: 280px;
-  flex-shrink: 0; /* Mantiene el ancho fijo */
+  flex-shrink: 0;
   background: linear-gradient(180deg, #2a1f3d 0%, #1e1632 100%);
-  border-right: 1px solid rgba(255, 193, 7, 0.2);
-  box-shadow: 4px 0 24px rgba(0,0,0,0.24);
+  border-right: 1.5px solid rgba(255, 193, 7, 0.25);
+  box-shadow: 8px 0 32px 0 rgba(255, 185, 2, 0.10), 0 10px 32px rgba(0,0,0,0.25);
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   z-index: 100;
-  transition: transform 0.2s ease, width 0.2s ease;
+  transition: transform 0.2s ease, width 0.2s ease, box-shadow 0.2s;
   overflow-x: hidden;
   overflow-y: auto;
-  transform: translateX(-100%); /* Hidden by default */
-  padding-top: 20px; /* Espacio para el contenido */
+  transform: translateX(-100%);
+  padding-top: 20px;
+  backdrop-filter: blur(6px);
 }
 
 /* Visible state for desktop and mobile */
-.sidebar.open {
-  transform: translateX(0);
-  animation: slideIn 0.3s ease-out; /* Ajustar velocidad de animación */
-}
+  .sidebar.open {
+    transform: translateX(0);
+    animation: slideIn 0.3s ease-out;
+  }
 
 /* Hidden state for desktop and mobile */
-.sidebar.hidden {
-  transform: translateX(-100%);
-}
+  .sidebar.hidden {
+    transform: translateX(-100%);
+  }
   
   /* Show hint when sidebar is hidden on desktop */
   @media (min-width: 769px) {
@@ -188,18 +190,22 @@
   /* Mobile hamburger menu - Always visible */
   .sidebar-mobile-toggle {
     position: fixed;
-    top: 20px; /* Mantener distancia del borde superior */
-    left: 20px; /* Posición que no interfiera con el logo */
+    top: 14px;
+    left: 14px;
     z-index: 1001;
     background: linear-gradient(45deg, #ffc107, #ffeb3b);
     border: none;
-    border-radius: 12px;
-    padding: 12px;
+    border-radius: 8px;
+    padding: 7px;
     cursor: pointer;
-    box-shadow: 0 4px 12px rgba(255, 193, 7, 0.25);
+    box-shadow: 0 2px 8px rgba(255, 193, 7, 0.18);
     transition: all 0.3s ease;
-    display: block; /* Always show the hamburger */
-    opacity: 0.9;
+    display: block;
+    opacity: 0.93;
+    width: 32px;
+    height: 32px;
+    min-width: 32px;
+    min-height: 32px;
   }
   
   .sidebar-mobile-toggle:hover {
@@ -219,8 +225,8 @@
   }
   
   .sidebar-mobile-toggle .hamburger {
-    width: 24px;
-    height: 18px;
+    width: 18px;
+    height: 13px;
     position: relative;
   }
   
@@ -401,14 +407,17 @@
     transition: background 0.19s cubic-bezier(.4,2,.6,1), color 0.17s, border 0.18s;
   }
 
+
   .sidebar-link.active {
-    background: linear-gradient(90deg, #ffb90244 0%, #2c62ff22 100%);
-    color: var(--main-accent);
+    background: linear-gradient(90deg, #ffb90255 0%, #2c62ff33 100%);
+    color: #fffbe6;
     border-left: 4px solid var(--main-accent);
+    box-shadow: 0 2px 8px 0 rgba(255, 185, 2, 0.10);
   }
   .sidebar-link:hover {
-    background: #39365a;
-    color: var(--main-accent);
+    background: #2a1f3d;
+    color: #ffb902;
+    box-shadow: 0 2px 8px 0 rgba(255, 185, 2, 0.10);
   }
 
   .sidebar-link .sidebar-link-label,

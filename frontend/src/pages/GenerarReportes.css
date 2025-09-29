@@ -298,48 +298,86 @@
   font-size: 18px;
 }
 
-.chart-bars {
-  display: flex;
-  justify-content: center;
-  align-items: end;
-  gap: 20px;
-  height: 300px;
-  flex-wrap: wrap;
-}
 
-.chart-bar {
+/* Gráfica mejorada */
+.chart-bars-enhanced {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-end;
+  gap: 0;
+  height: 240px;
+  position: relative;
+  margin-bottom: 24px;
+}
+.y-axis {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: flex-end;
+  height: 200px;
+  margin-right: 10px;
+  font-size: 13px;
+  color: var(--grey-medium);
+  font-weight: 600;
+}
+.bars-wrapper {
+  display: flex;
+  align-items: flex-end;
+  gap: 32px;
+  height: 200px;
+  min-width: 0;
+}
+.chart-bar-enhanced {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
+  width: 60px;
+  min-width: 60px;
+  position: relative;
 }
-
-.bar {
+.bar.enhanced {
   width: 40px;
-  background: var(--main-accent);
-  border-radius: 4px 4px 0 0;
-  transition: all 0.3s;
-  min-height: 20px;
-  box-shadow: 0 2px 8px rgba(255, 185, 2, 0.3);
+  border-radius: 6px 6px 0 0;
+  min-height: 10px;
+  box-shadow: 0 2px 8px rgba(255, 185, 2, 0.18);
+  margin-bottom: 4px;
+  transition: height 0.7s cubic-bezier(0.4,0,0.2,1);
 }
-
-.bar:hover {
-  opacity: 0.8;
-  transform: scale(1.05);
+.bar-value-top {
+  font-weight: 700;
+  color: #fff;
+  font-size: 15px;
+  margin-bottom: 2px;
+  text-shadow: 0 1px 4px rgba(0,0,0,0.18);
 }
-
 .bar-label {
-  font-size: 12px;
+  font-size: 13px;
   color: var(--grey-medium);
   text-align: center;
   max-width: 80px;
   word-wrap: break-word;
+  margin-top: 4px;
 }
-
-.bar-value {
-  font-weight: 600;
-  color: var(--main-accent);
-  font-size: 14px;
+.x-axis {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(90deg, #ffb90244 0%, #fff0 100%);
+  z-index: 1;
+}
+@media (max-width: 768px) {
+  .bars-wrapper {
+    gap: 12px;
+  }
+  .chart-bar-enhanced {
+    width: 40px;
+    min-width: 40px;
+  }
+  .bar.enhanced {
+    width: 24px;
+  }
 }
 
 /* Responsive design */

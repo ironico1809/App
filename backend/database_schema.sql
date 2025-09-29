@@ -1,3 +1,19 @@
+-- TABLAS PARA CONFIGURACIÓN DE PRECIOS (EXPENSAS, SERVICIOS, MULTAS)
+CREATE TABLE cuota_servicio (
+    id_cuota INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL,
+    descripcion VARCHAR(200),
+    monto DECIMAL(10,2) NOT NULL,
+    tipo VARCHAR(50),
+    fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE multa (
+    id_multa INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    descripcion VARCHAR(200),
+    monto DECIMAL(10,2) NOT NULL,
+    fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
 CREATE TABLE usuario (
     id_usuario INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     nombre_completo VARCHAR(100) NOT NULL,
@@ -274,3 +290,24 @@ CREATE TABLE exportacion_reporte (
     fecha_exportacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     id_usuario INT REFERENCES usuario(id_usuario) ON DELETE SET NULL
 );
+
+-- INSERTS DE EJEMPLO PARA UNIDAD
+INSERT INTO unidad (id_unidad, numero, propietario, piso) VALUES
+    (1, 'A101', 'Juan Pérez', 1),
+    (2, 'A102', 'María López', 1),
+    (3, 'B201', 'Carlos Ruiz', 2);
+
+-- INSERTS DE EJEMPLO PARA CUOTA_SERVICIO
+INSERT INTO cuota_servicio (id_cuota, nombre, descripcion, monto, tipo, fecha_creacion) VALUES
+    (1, 'Expensa mensual', 'Expensa ordinaria', 1500.00, 'expensa', CURRENT_TIMESTAMP),
+    (2, 'Luz común', 'Servicio de luz de áreas comunes', 300.00, 'servicio', CURRENT_TIMESTAMP),
+    (3, 'Agua', 'Servicio de agua', 200.00, 'servicio', CURRENT_TIMESTAMP);
+
+-- INSERTS DE EJEMPLO PARA CUOTA_GENERADA
+INSERT INTO cuota_generada (id_cuota_generada, id_unidad, id_cuota, fecha_generacion, monto, estado) VALUES
+    (1, 1, 1, '2025-09-01', 1500.00, 'pendiente'),
+    (2, 2, 1, '2025-09-01', 1500.00, 'pendiente'),
+    (3, 3, 1, '2025-09-01', 1500.00, 'pendiente'),
+    (4, 1, 2, '2025-09-01', 300.00, 'pendiente'),
+    (5, 2, 2, '2025-09-01', 300.00, 'pendiente'),
+    (6, 3, 3, '2025-09-01', 200.00, 'pendiente');

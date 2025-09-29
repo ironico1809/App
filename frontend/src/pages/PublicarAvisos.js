@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react';
 import DashboardLayout from '../components/DashboardLayout';
 import Input from '../components/Input';
 import Button from '../components/Button';
+import { crearAvisoConAdjuntos } from '../services/api';
 import './PublicarAvisos.css';
 
 const segmentosDestino = [
@@ -103,27 +104,19 @@ const PublicarAvisos = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
     if (!validateForm()) return;
-
     setLoading(true);
-    
     try {
-      // Aquí iría la lógica para enviar al backend
-      const avisoData = {
-        ...formData,
-        adjuntos: adjuntos.map(adj => adj.file),
-        fechaCreacion: new Date().toISOString(),
-      };
-      
-      console.log('Publicando aviso:', avisoData);
-      
-      // Simular envío
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      alert('Aviso publicado exitosamente');
-      
-      // Limpiar formulario
+      // Aquí va la magia, pe
+      const id_admin = 1; // Cambia esto por el id real del admin logueado si lo tienes
+      const aviso = await crearAvisoConAdjuntos({
+        titulo: formData.titulo,
+        cuerpo: formData.cuerpo,
+        segmento: formData.segmento,
+        id_admin,
+        adjuntos: adjuntos.map(adj => adj.file)
+      });
+      alert('Aviso publicado exitosamente, pe');
       setFormData({
         titulo: '',
         cuerpo: '',
@@ -135,10 +128,9 @@ const PublicarAvisos = () => {
       });
       setAdjuntos([]);
       setPreview(false);
-      
     } catch (error) {
       console.error('Error al publicar aviso:', error);
-      alert('Error al publicar el aviso. Intente nuevamente.');
+      alert('Error al publicar el aviso. Intenta de nuevo, causa.');
     } finally {
       setLoading(false);
     }

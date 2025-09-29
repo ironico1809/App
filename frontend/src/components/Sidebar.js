@@ -5,7 +5,7 @@ import './Sidebar_fixed.css';
 const Sidebar = ({ collapsed = false }) => {
   const location = useLocation();
   const asideRef = useRef(null);
-  const [isOpen, setIsOpen] = useState(true); // Siempre abierto
+  const [isOpen, setIsOpen] = useState(window.innerWidth > 768); // Abierto en desktop, cerrado en móvil
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [showHint, setShowHint] = useState(false); // No mostrar hint
   const [openUsers, setOpenUsers] = useState(
@@ -177,19 +177,18 @@ const Sidebar = ({ collapsed = false }) => {
       {isMobile && (
         <button
           className={`sidebar-mobile-toggle ${isOpen ? 'active' : ''}`}
-          onClick={toggleSidebar}
+          onClick={() => setIsOpen((prev) => !prev)}
           aria-label={isOpen ? 'Cerrar menú' : 'Abrir menú'}
           title={isOpen ? 'Cerrar menú' : 'Abrir menú de navegación'}
+          style={{padding: '7px', borderRadius: '8px'}}
         >
-          <div className="hamburger">
+          <div className="hamburger" style={{width: '18px', height: '13px'}}>
             <span></span>
             <span></span>
             <span></span>
           </div>
         </button>
       )}
-
-      {/* Hint for desktop users when sidebar is hidden (no longer needed) */}
 
       {/* Overlay for mobile */}
       {isMobile && (
@@ -199,7 +198,8 @@ const Sidebar = ({ collapsed = false }) => {
         />
       )}
 
-  <aside ref={asideRef} className={sidebarClasses}>
+  <aside ref={asideRef} className={sidebarClasses + (!isMobile || isOpen ? ' open' : ' hidden')} style={!isMobile ? {top: 60} : {}}>
+        {/* ...existing code... */}
         <nav className="sidebar-nav">
         <Link
           to="/dashboard"
