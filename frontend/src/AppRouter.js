@@ -1,5 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import PrivateRoute from './components/PrivateRoute';
 import LoginPage from './pages/LoginPage';
 import RegistrarUsuario from './pages/RegistrarUsuario';
 import RecuperarContrasena from './pages/RecuperarContrasena';
@@ -27,30 +28,30 @@ import EstadisticasSeguridad from './pages/EstadisticasSeguridad';
 const AppRouter = () => (
   <Router>
     <Routes>
-      <Route path="/" element={<LoginPage />} />
-  <Route path="/registrar" element={<RegistrarUsuario />} />
-  <Route path="/recuperar-contrasena" element={<RecuperarContrasena />} />
-  <Route path="/dashboard" element={<Dashboard />} />
-  <Route path="/usuarios" element={<GestionarUsuarios />} />
-  <Route path="/roles" element={<GestionarRoles />} />
-  <Route path="/finanzas/cuotas-servicios" element={<CuotasServicios />} />
-  <Route path="/finanzas/pagos" element={<Pagos />} />
-  <Route path="/finanzas/historial" element={<HistorialPagos />} />
-  <Route path="/finanzas/config-precios" element={<ConfigPrecios />} />
-  <Route path="/comunicacion/anuncios" element={<PublicarAvisos />} />
-  <Route path="/areas-comunes/reservas" element={<ReservarAreas />} />
-  <Route path="/areas-comunes/configurar" element={<ConfigurarDisponibilidad />} />
-  <Route path="/areas-comunes/reportes" element={<GenerarReportes />} />
-  <Route path="/mantenimiento/asignar-tareas" element={<AsignarTareas />} />
-  <Route path="/mantenimiento/seguimiento-preventivo" element={<SeguimientoMantenimiento />} />
-  <Route path="/mantenimiento/reportes-costos" element={<ReportesCostos />} />
-  <Route path="/seguridad/consola-camaras" element={<ConsolaCamaras />} />
-  <Route path="/seguridad/reconocimiento-facial" element={<ReconocimientoFacial />} />
-  <Route path="/seguridad/deteccion-visitantes" element={<DeteccionVisitantes />} />
-  <Route path="/seguridad/identificacion-vehiculos" element={<IdentificacionVehiculos />} />
-  <Route path="/reportes/estadisticas" element={<EstadisticasSeguridad />} />
-  <Route path="/finanzas/reportes-financieros" element={<ReportesFinancieros />} />
-  <Route path="/reportes/generar-reportes" element={<GenerarReportes />} />
+  <Route path="/" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
+    <Route path="/registrar" element={<RegistrarUsuario />} />
+    <Route path="/recuperar-contrasena" element={<RecuperarContrasena />} />
+    <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
+    <Route path="/usuarios" element={<PrivateRoute><GestionarUsuarios /></PrivateRoute>} />
+    <Route path="/roles" element={<PrivateRoute><GestionarRoles /></PrivateRoute>} />
+    <Route path="/finanzas/cuotas-servicios" element={<PrivateRoute><CuotasServicios /></PrivateRoute>} />
+    <Route path="/finanzas/pagos" element={<PrivateRoute><Pagos /></PrivateRoute>} />
+    <Route path="/finanzas/historial" element={<PrivateRoute><HistorialPagos /></PrivateRoute>} />
+    <Route path="/finanzas/config-precios" element={<PrivateRoute><ConfigPrecios /></PrivateRoute>} />
+    <Route path="/comunicacion/anuncios" element={<PrivateRoute><PublicarAvisos /></PrivateRoute>} />
+    <Route path="/areas-comunes/reservas" element={<PrivateRoute><ReservarAreas /></PrivateRoute>} />
+    <Route path="/areas-comunes/configurar" element={<PrivateRoute><ConfigurarDisponibilidad /></PrivateRoute>} />
+    <Route path="/areas-comunes/reportes" element={<PrivateRoute><GenerarReportes /></PrivateRoute>} />
+    <Route path="/mantenimiento/asignar-tareas" element={<PrivateRoute><AsignarTareas /></PrivateRoute>} />
+    <Route path="/mantenimiento/seguimiento-preventivo" element={<PrivateRoute><SeguimientoMantenimiento /></PrivateRoute>} />
+    <Route path="/mantenimiento/reportes-costos" element={<PrivateRoute><ReportesCostos /></PrivateRoute>} />
+    <Route path="/seguridad/consola-camaras" element={<PrivateRoute><ConsolaCamaras /></PrivateRoute>} />
+    <Route path="/seguridad/reconocimiento-facial" element={<PrivateRoute><ReconocimientoFacial /></PrivateRoute>} />
+    <Route path="/seguridad/deteccion-visitantes" element={<PrivateRoute><DeteccionVisitantes /></PrivateRoute>} />
+    <Route path="/seguridad/identificacion-vehiculos" element={<PrivateRoute><IdentificacionVehiculos /></PrivateRoute>} />
+    <Route path="/reportes/estadisticas" element={<PrivateRoute><EstadisticasSeguridad /></PrivateRoute>} />
+    <Route path="/finanzas/reportes-financieros" element={<PrivateRoute><ReportesFinancieros /></PrivateRoute>} />
+    <Route path="/reportes/generar-reportes" element={<PrivateRoute><GenerarReportes /></PrivateRoute>} />
     </Routes>
   </Router>
 );

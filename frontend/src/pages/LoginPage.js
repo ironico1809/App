@@ -1,6 +1,6 @@
 
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Button from '../components/Button';
 import Input from '../components/Input';
 import Checkbox from '../components/Checkbox';
@@ -8,7 +8,7 @@ import LinkButton from '../components/LinkButton';
 import { Link, useNavigate } from 'react-router-dom';
 import Card from '../components/Card';
 import './LoginPage.css';
-import { loginUsuario } from '../services/auth';
+
 
 const LoginPage = () => {
   const [email, setEmail] = useState('');
@@ -17,6 +17,13 @@ const LoginPage = () => {
   const [remember, setRemember] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      navigate('/dashboard', { replace: true });
+    }
+  }, [navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
